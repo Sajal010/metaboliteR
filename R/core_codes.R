@@ -1,4 +1,3 @@
-
 # PPCA Method -------------------------------------------------------------
 
 #' @importFrom stats prcomp qnorm sd glm gaussian
