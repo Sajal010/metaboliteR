@@ -1,0 +1,25 @@
+Package: metaboliteR
+Type: Package
+Title: What the Package Does (Title Case) TODO!!
+Version: 0.1.0
+Author: Xian Yao Gwee <xian-yao.gwee@ucdconnect.ie> [aut, cre]
+        Luiza Piancastelli <luiza.piancastelli@ucdconnect.ie> [aut, cre]
+        Sajal Kaur Minhas <sajal.minhas@ucdconnect.ie> [aut, cre]
+Maintainer: The package maintainer <yourself@somewhere.net>
+Description: More about what it does (maybe more than one line) TODO!!
+    Use four spaces when indenting paragraphs within the Description.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Depends: R (>= 2.10)
+Imports: 
+    abind,
+    ellipse,
+    furrr,
+    future,
+    future.apply,
+    graphics,
+    magrittr,
+    stats,
+    fastDummies
+RoxygenNote: 6.1.1
