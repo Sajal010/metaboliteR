@@ -19,6 +19,3 @@ Diagnostic plots
 \description{
 Title
 }
-\examples{
-plot(PPCA(urine_data, q_max=2)$diagnostic)
-}

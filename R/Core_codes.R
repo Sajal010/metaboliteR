@@ -6,7 +6,7 @@
 #' @importFrom future plan multisession
 #' @importFrom future.apply future_lapply
 #' @importFrom furrr future_map
-PPCA_one_q <- function(data, covariates_data, q, B, eps = 0.01, max_it = 1000, est.sd = F, w.sd = F){
+PPCA_one_q <- function(data, covariates_data, q, B, eps = 0.01, max_it = 1000, est.sd = FALSE, w.sd = FALSE){
   #B is the number of bootstrap replicas to estimate loadings sd
 
   # Initialise variables
@@ -193,7 +193,7 @@ PPCA_multi_q = function(data, covariates_data, q_min, q_max, eps = 0.01, max_it 
   }
 
   names(output) <- c(paste0("Q", X))
-  on.exit(plan(ori_plan), add = T)
+  on.exit(plan(ori_plan), add = TRUE)
   return(output)
 }
 
@@ -256,18 +256,17 @@ loadings_std = function(data, q, B){
     future_map(~ one_replica(data, q))
 
   sd_loading = apply(simplify2array(list_loadings), c(1,2), sd)
-  on.exit(plan(ori_plan), add = T)
+  on.exit(plan(ori_plan), add = TRUE)
   return(sd_loading)
 }
 
 loadings_alpha_std = function(data,covariates_data, q, B){
-
   one_replica = function(data,covariates_data,q){
     n = nrow(data); data = as.matrix(data); n_var = ncol(covariates_data)
     order = sample(nrow(data),size=n,replace=TRUE)
     data_boot = data[order,] #sample the original data set
-    cov_boot = matrix(covariates_data[order,], ncol =n_var)  #same order << error in this line
-    cov_boot = data.frame(cov_boot)
+    cov_boot = covariates_data[order,]
+
     EM = PPCA_one_q(data_boot,cov_boot,q=q)
     out = list(); out[[1]] = EM$loadings; out[[2]] = EM$alpha
     return(out)
@@ -291,7 +290,7 @@ loadings_alpha_std = function(data,covariates_data, q, B){
   sd_alpha = apply(simplify2array(alphas), c(1,2), sd)
   sd_loads = apply(simplify2array(loads), c(1,2), sd)
 
-  on.exit(plan(ori_plan), add = T)
+  on.exit(plan(ori_plan), add = TRUE)
 
   output = list(sd_alpha = sd_alpha,
                 sd_loads = sd_loads)
@@ -367,14 +366,20 @@ max_log_likelihood <- function(data, W, sigma2, delta){
   p <- ncol(data)
   x_minus_mu <- t(scale(data, scale = FALSE))
   variance <- W%*%t(W)+sigma2*diag(p)
+  if(is.na(log(det(variance)))){
+    log_det_variance = 0
+  }
+  else {
+    log_det_variance = log(det(variance))
+  }
   if(missing(delta)){
     max_log_likelihood_values <- -(0.5*n*p)*log(2*pi) -
-      0.5*n*log(det(variance)) -
+      0.5*n*log_det_variance -
       0.5*tr(t(x_minus_mu)%*%solve(variance)%*%x_minus_mu)
   }
   else {
     max_log_likelihood_values <- -(0.5*n*p)*log(2*pi) -
-      0.5*n*log(det(variance)) -
+      0.5*n*log_det_variance -
       0.5*tr(t(x_minus_mu-(W%*%delta))%*%solve(variance)%*%(x_minus_mu-W%*%delta))
   }
 

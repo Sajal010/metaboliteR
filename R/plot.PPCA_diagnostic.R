@@ -8,8 +8,6 @@
 #' @export plot.PPCA_diagnostic
 #' @export
 #'
-#' @examples
-#' plot(PPCA(urine_data, q_max=2)$diagnostic)
 #' @import graphics
 #'
 plot.PPCA_diagnostic <- function(x, max_ll = FALSE, ...) {
