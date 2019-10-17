@@ -1,4 +1,4 @@
-# MetaboliteR
+# metaboliteR
 
 R packages of Probabilistic Principal Component Analaysis (PPCA) for metabolomic data
 

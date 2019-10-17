@@ -7,6 +7,7 @@
 #' @importFrom future.apply future_lapply
 #' @importFrom furrr future_map
 PPCA_one_q <- function(data, covariates_data, q, B, eps = 0.01, max_it = 1000, est.sd = FALSE, w.sd = FALSE){
+
   #B is the number of bootstrap replicas to estimate loadings sd
 
   # Initialise variables
@@ -25,6 +26,7 @@ PPCA_one_q <- function(data, covariates_data, q, B, eps = 0.01, max_it = 1000, e
 
   }
   else {
+    covariates_data <- as.data.frame(covariates_data)
     covariates = manipulate_covariates(covariates_data)
     L <- ncol(covariates)-1 # total number of covariates after data manipulation
     number_of_free_param <- (p * q) - (0.5 * q * (q - 1)) + (q * (L + 1)) + 1
@@ -262,7 +264,8 @@ loadings_std = function(data, q, B){
 
 loadings_alpha_std = function(data,covariates_data, q, B){
   one_replica = function(data,covariates_data,q){
-    n = nrow(data); data = as.matrix(data); n_var = ncol(covariates_data)
+    n = nrow(data); data = as.matrix(data)
+    covariates_data = as.data.frame(covariates_data); n_var = ncol(covariates_data)
     order = sample(nrow(data),size=n,replace=TRUE)
     data_boot = data[order,] #sample the original data set
     cov_boot = covariates_data[order,]

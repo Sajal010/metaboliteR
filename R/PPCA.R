@@ -94,11 +94,13 @@ PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_i
 
   else {
     loadings_sd <- NULL
-    if(!missing(covariates_data)) {
-      alpha_sd <- NULL
-    }
+    alpha_sd <- NULL
+  }
+  if(missing(covariates_data)) {
+    alpha_sd <- NULL
   }
 
+  output[['alpha_sd']] <- alpha_sd
   output[['loadings_sd']] <- loadings_sd
   output$optimal_Q <- q
   output$diagnostic$max_ll_values <- output$max_ll_results
