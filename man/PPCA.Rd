@@ -5,7 +5,7 @@
 \title{Title}
 \usage{
 PPCA(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01,
-  max_it = 1000, B, conf_level = 0.95)
+  max_it = 1000, B, conf_level = 0.95, choose_q = TRUE)
 }
 \arguments{
 \item{data}{Metabolomic data}
@@ -23,6 +23,8 @@ PPCA(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01,
 \item{B}{Number of Bootstrap runs}
 
 \item{conf_level}{Confidence Level}
+
+\item{choose_q}{Choose Optimal Q value as model output}
 }
 \value{
 PPCA objects

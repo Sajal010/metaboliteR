@@ -8,13 +8,14 @@
 #' @param B Number of Bootstrap runs
 #' @param conf_level Confidence Level
 #' @param covariates_data Covariates from the sample attributes (e.g: weights, gender, regions, etc)
+#' @param choose_q Choose Optimal Q value as model output
 #'
 #' @return PPCA objects
 #' @export
 #'
 #' @examples
 #' PPCA(urine_data, q_max=2)
-PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_it = 1000, B, conf_level=0.95){
+PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_it = 1000, B, conf_level=0.95, choose_q = TRUE){
 
   p <- ncol(data) # total number of spectral bins
   n <- nrow(data)
@@ -48,7 +49,14 @@ PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_i
     })
     PoV_values <- unlist(PoV_values)
 
-    q = which(bic_values==max(bic_values)) # Obtain optimal q
+    optimal_q = which(bic_values==max(bic_values)) # Obtain optimal q
+    if(choose_q==TRUE) {
+      q = optimal_q
+    }
+    else {
+      q = q_max
+    }
+
   }
 
   #### Outputs ####
@@ -100,9 +108,11 @@ PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_i
     alpha_sd <- NULL
   }
 
+  if(q_min != q_max) {
+    output$optimal_q <- optimal_q
+  }
   output[['alpha_sd']] <- alpha_sd
   output[['loadings_sd']] <- loadings_sd
-  output$optimal_Q <- q
   output$diagnostic$max_ll_values <- output$max_ll_results
   output$diagnostic$BIC_values <- bic_values
   output$diagnostic$PoV_values <- PoV_values
