@@ -1,6 +1,6 @@
 library(shiny)
 
-default_data <- urine_data
+default_data <- UrineSpectra[[1]]
 
 shinyServer(function(input, output, session) {
 
@@ -90,7 +90,10 @@ shinyServer(function(input, output, session) {
 
                      PPCA_object <- PPCA(main_data(),
                                          q_min = input$PC_slider[1], q_max=input$PC_slider[2],
-                                         B=input$bootstrap_n_slider)
+                                         B=input$bootstrap_n_slider, eps = input$epsilon, max_it = input$max_iter,
+                                         choose_q = input$choose_q)
+
+                     output$optimal_q <- renderText(paste("Optimal Q =", PPCA_object$optimal_q))
 
                      output$PPCA_plot <- renderPlot({
                          plot(PPCA_object, PC=input$main_plot_PC, conf_level=input$conf_int, n=input$n_main)
@@ -125,12 +128,18 @@ shinyServer(function(input, output, session) {
 
 
                      val <- input$PC_slider
+                     if(input$choose_q == TRUE) {
+                         PC_max_slider <- PPCA_object$optimal_q
+                     }
+                     else {
+                         PC_max_slider <- val[2]
+                     }
                      updateSliderInput(session, "main_plot_PC", value = val[1],
-                                       min = val[1], max = PPCA_object$optimal_Q)
-                     updateSliderInput(session, "x_PC", value = PPCA_object$optimal_Q-1,
-                                       min = val[1], max = PPCA_object$optimal_Q)
-                     updateSliderInput(session, "y_PC", value = PPCA_object$optimal_Q,
-                                       min = val[1], max = PPCA_object$optimal_Q)
+                                       min = val[1], max = PC_max_slider)
+                     updateSliderInput(session, "x_PC", value = PC_max_slider-1,
+                                       min = val[1], max = PC_max_slider)
+                     updateSliderInput(session, "y_PC", value = PC_max_slider,
+                                       min = val[1], max = PC_max_slider)
                      updateSliderInput(session, "n_main", max = length(PPCA_object$significant_x[[input$main_plot_PC]]))
                      main_data_names <- as.numeric(colnames(main_data()))
                      updateSliderInput(session, "x_lim", value = c(min(main_data_names),max(main_data_names)),
@@ -153,6 +162,14 @@ shinyServer(function(input, output, session) {
                      )
 
                      on.exit(removeNotification("ppca_progress"), add = TRUE)
+
+                     # Switches to Main plot if User is in Description when model has finished running.
+                     if(input$analytics_plot_tabs == 'PPCA_description') {
+                         updateTabsetPanel(session, "analytics_plot_tabs",
+                                           selected = "main_PPCA_plot"
+                         )
+                     }
+
 
                  }))
 
