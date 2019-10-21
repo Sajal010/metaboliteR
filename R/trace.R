@@ -1,6 +1,6 @@
 #' Function to calculate the trace of a matrix.
 #'
-#' @param matrix
+#' @param matrix a
 #'
 #' @return Numeric. Trace value.
 #'
