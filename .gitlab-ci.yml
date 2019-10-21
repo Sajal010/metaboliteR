@@ -24,6 +24,7 @@ testing:
     only:
         - master
     script:
+        - Rscript -e 'install.local()'
         - Rscript -e 'install.packages("DT")'
         - Rscript -e 'covr::gitlab(quiet = FALSE)'
     artifacts:
