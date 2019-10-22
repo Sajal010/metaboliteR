@@ -93,8 +93,6 @@ shinyServer(function(input, output, session) {
                                          B=input$bootstrap_n_slider, eps = input$epsilon, max_it = input$max_iter,
                                          choose_q = input$choose_q)
 
-                     output$optimal_q <- renderText(paste("Optimal Q =", PPCA_object$optimal_q))
-
                      output$PPCA_plot <- renderPlot({
                          plot(PPCA_object, PC=input$main_plot_PC, conf_level=input$conf_int, n=input$n_main)
                      })
@@ -128,12 +126,20 @@ shinyServer(function(input, output, session) {
 
 
                      val <- input$PC_slider
-                     if(input$choose_q == TRUE) {
-                         PC_max_slider <- PPCA_object$optimal_q
-                     }
-                     else {
+                     if(val[1]==val[2]) { # Same PC
                          PC_max_slider <- val[2]
+                         output$optimal_q <- renderText("")
                      }
+                     else{ # Different PC
+                         output$optimal_q <- renderText(paste("Optimal Q =", PPCA_object$optimal_q))
+                         if(input$choose_q == TRUE) {
+                             PC_max_slider <- PPCA_object$optimal_q
+                         }
+                         else {
+                             PC_max_slider <- val[2]
+                         }
+                     }
+
                      updateSliderInput(session, "main_plot_PC", value = val[1],
                                        min = val[1], max = PC_max_slider)
                      updateSliderInput(session, "x_PC", value = PC_max_slider-1,
