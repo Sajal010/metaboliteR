@@ -33,10 +33,10 @@ PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_i
   } else { # For different q
     if(missing(covariates_data)) {
       all_results = PPCA_multi_q(data, q_min = q_min, q_max = q_max,eps = eps, max_it= max_it)
-    }
-    else {
+    } else {
       all_results = PPCA_multi_q(data, covariates_data = covariates_data, q_min = q_min, q_max = q_max,eps = eps, max_it= max_it)
     }
+  }
 
     # Obtain BIC values
     if (q_min != q_max){
@@ -66,7 +66,6 @@ PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_i
       q = q_max
     }
 
-  }
 
   #### Outputs ####
   if(q_min == q_max){ # For same q case
@@ -75,23 +74,25 @@ PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_i
     output <- all_results[[paste0('Q',q)]]
   }
 
-  if(missing(B)==FALSE){ #if B exists
+  if(missing(B)==FALSE) { #if B exists
     if(missing(covariates_data)) {
       loadings_sd <- loadings_std(data, q=q, B=B,initial_guesses = list(sigma2= output$sigma2,
                                                                   loadings = output$loadings)) # standard deviation of loadings
       alpha_sd = NULL
-    } else {
+    }
+   else if (!missing(covariates_data) ){
       boot = loadings_alpha_std(data, covariates_data, q=q, B=B, initial_guesses = list(alpha = output$alpha,
                                                                                         sigma2= output$sigma2,
                                                                                         loadings = output$loadings))
       loadings_sd = boot$sd_loads
       alpha_sd = boot$sd_alpha
     }
-   if(missing(B)){
+  } else {
       loadings_sd <- NULL
       alpha_sd <- NULL
-    }
+  }
 
+  if (!missing(B)){
     lower_CI <- output$loadings - qnorm(1-(1-conf_level)/2)*loadings_sd/sqrt(n)
     upper_CI <- output$loadings + qnorm(1-(1-conf_level)/2)*loadings_sd/sqrt(n)
 
