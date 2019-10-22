@@ -15,6 +15,8 @@
 #'
 #' @examples
 #' PPCA(urine_data, q_max=2)
+
+
 PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_it = 1000, B, conf_level=0.95, choose_q = TRUE){
 
   p <- ncol(data) # total number of spectral bins
@@ -36,24 +38,31 @@ PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_i
       all_results = PPCA_multi_q(data, covariates_data = covariates_data, q_min = q_min, q_max = q_max,eps = eps, max_it= max_it)
     }
 
-    X <- q_min:q_max
     # Obtain BIC values
+    if (q_min != q_max){
+    X <- q_min:q_max
     bic_values <- lapply(X, function(x){
       bic <- all_results[[paste0('Q',x)]]$bic
     })
     bic_values <- unlist(bic_values)
+    } else {
+    bic_values <- all_results$bic
+    }
 
     # Obtain proportion of variance
+    if (q_min != q_max){
     PoV_values <- lapply(X, function(x){
       PoV <- all_results[[paste0('Q',x)]]$PoV
     })
     PoV_values <- unlist(PoV_values)
+    } else {
+      PoV_values <- all_results$PoV
+    }
 
     optimal_q = which(bic_values==max(bic_values)) # Obtain optimal q
     if(choose_q==TRUE) {
       q = optimal_q
-    }
-    else {
+    } else {
       q = q_max
     }
 
@@ -68,14 +77,20 @@ PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_i
 
   if(missing(B)==FALSE){ #if B exists
     if(missing(covariates_data)) {
-      loadings_sd <- loadings_std(data, q=q, B=B) # standard deviation of loadings
-    }
-    else {
-      boot = loadings_alpha_std(data, covariates_data, q=q, B=B)
+      loadings_sd <- loadings_std(data, q=q, B=B,initial_guesses = list(sigma2= output$sigma2,
+                                                                  loadings = output$loadings)) # standard deviation of loadings
+      alpha_sd = NULL
+    } else {
+      boot = loadings_alpha_std(data, covariates_data, q=q, B=B, initial_guesses = list(alpha = output$alpha,
+                                                                                        sigma2= output$sigma2,
+                                                                                        loadings = output$loadings))
       loadings_sd = boot$sd_loads
       alpha_sd = boot$sd_alpha
     }
-
+   if(missing(B)){
+      loadings_sd <- NULL
+      alpha_sd <- NULL
+    }
 
     lower_CI <- output$loadings - qnorm(1-(1-conf_level)/2)*loadings_sd/sqrt(n)
     upper_CI <- output$loadings + qnorm(1-(1-conf_level)/2)*loadings_sd/sqrt(n)
@@ -100,17 +115,10 @@ PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_i
     class(significant_x) <- 'PPCA_significant'
   }
 
-  else {
-    loadings_sd <- NULL
-    alpha_sd <- NULL
-  }
-  if(missing(covariates_data)) {
-    alpha_sd <- NULL
-  }
-
   if(q_min != q_max) {
     output$optimal_q <- optimal_q
   }
+
   output[['alpha_sd']] <- alpha_sd
   output[['loadings_sd']] <- loadings_sd
   output$diagnostic$max_ll_values <- output$max_ll_results
