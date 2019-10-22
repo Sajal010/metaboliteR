@@ -30,7 +30,10 @@ PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_i
       all_results = PPCA_one_q(data, covariates_data = covariates_data, q = q_min, eps = eps, max_it= max_it)
     }
     q = q_min
-  } else { # For different q
+    bic_values <- all_results$bic
+    PoV_values <- all_results$PoV
+  }
+  else { # For different q
     if(missing(covariates_data)) {
       all_results = PPCA_multi_q(data, q_min = q_min, q_max = q_max,eps = eps, max_it= max_it)
     } else {
