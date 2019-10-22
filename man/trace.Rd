@@ -7,7 +7,7 @@
 trace(matrix)
 }
 \arguments{
-\item{matrix}{}
+\item{matrix}{Matrix to calculate trace from.}
 }
 \value{
 Numeric. Trace value.

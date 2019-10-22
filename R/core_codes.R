@@ -1,7 +1,7 @@
 # PPCA Method -------------------------------------------------------------
 
 #' @importFrom stats prcomp qnorm sd glm gaussian
-#' @importFrom  %>%
+#' @importFrom magrittr %>%
 #' @importFrom future plan multisession
 #' @importFrom future.apply future_lapply
 #' @importFrom furrr future_map
