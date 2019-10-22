@@ -1,15 +1,19 @@
 #' Heatmap of BIC values for different g and q.
 #'
-#' WILL STILL CHANGE THE CLASSES AND STUFF LIKE THAT
+#' @import ggplot2
 #'
-#' @param bic_results from MPPCA results
+#' @param bic_results pbject of class MPPCA_BIC from MPPCA results
 #'
 #' @export
 #'
 
-plot_BIC = function(bic_results) {
+plot.MPPCA_BIC = function(bic_results) {
 
-  comb <- bic_results
+
+  comb <- bic_results #tranform it to df
+  comb = data.frame(matrix(unlist(comb),ncol = 3))
+  names(comb) = c("g", "q", "BIC")
+
   opt_g = comb$g[comb$BIC == max(comb$BIC)]
   opt_q = comb$q[comb$BIC == max(comb$BIC)]
 

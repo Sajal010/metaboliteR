@@ -1,3 +1,11 @@
+#' @importFrom stats cov rnorm cmdscale dist
+#' @importFrom mclust dmvnorm mclustBIC
+#' @importFrom stats prcomp qnorm sd glm gaussian
+#' @importFrom magrittr %>%
+#' @importFrom future plan multisession
+#' @importFrom future.apply future_lapply
+#' @importFrom furrr future_map
+
 # MPPCA Method -------------------------------------------------------------
 
 MPPCA_one_q_one_g <- function(data, q, g, max_it = 1000,eps = 0.1, initial.guesses = NULL){
@@ -38,7 +46,6 @@ MPPCA_one_q_one_g <- function(data, q, g, max_it = 1000,eps = 0.1, initial.guess
     if (is.null(initial.guesses)==TRUE) {
 
       #Estimate groups using packeage mclust
-      suppressMessages(library(mclust))
       m<-mclust::mclustBIC(cmdscale(dist(data_scaled)), G=g, verbose = FALSE)
       res<-summary(m, cmdscale(dist(data_scaled)))
       tau<-res$z                                             #Probability of each obs belonging to each group

@@ -2,20 +2,23 @@
 #'
 #' Fits Mixtures of Probabilistic Principal Components model to data.
 #'
+#' @importFrom mclust dmvnorm
 #' @importFrom ggplot2 ggplot
+#' @importFrom magrittr %>%
+#' @importFrom future plan multisession
+#' @importFrom furrr future_pmap
 #'
 #' @param data  Data to perform MPPCA on
 #' @param q_min Minumum number of components
 #' @param q_max Maximum number of components
 #' @param g_min Minimum number of clusters
 #' @param g_max Maximum number of clusters
-#' @param plot.BIC Logical indicanting if the plot of BIC values should be shown. Default to false.
+#' @param B Number of bootstrap replicas for calculation of loadings sd
+#' @param eps Tolerance for convergence of EM algorithm
 #'
 #' @return List of outputs.
 #' @export
-#'
-#' @examples
-#' MPPCA(urine_data, q_min = 1, q_max = 3, g_min = 1, g_max = 2)
+
 MPPCA = function(data, q_min, q_max, g_min, g_max, eps = 0.1, B=100){
 
   q_sequence = seq(q_min, q_max, 1)
@@ -24,10 +27,10 @@ MPPCA = function(data, q_min, q_max, g_min, g_max, eps = 0.1, B=100){
   comb = expand.grid(q_sequence, g_sequence)
   names(comb) = c("q", "g")
 
-  library(furrr)
   multiple = list(q = comb$q, g = comb$g)
+  ori_plan <- plan()
   plan(multisession)
-  out = future_pmap(multiple, MPPCA_one_q_one_g, data = data, eps = 0.1, .progress = TRUE)
+  out = furrr::future_pmap(multiple, MPPCA_one_q_one_g, data = data, eps = 0.1, .progress = TRUE)
 
   ######### Selecting optimal model #########
 
@@ -71,6 +74,9 @@ MPPCA = function(data, q_min, q_max, g_min, g_max, eps = 0.1, B=100){
   result$q_optimal = opt_q
   result$g_optimal = opt_g
   result$bic_results = comb
+
+  class(result$bic_results) <- "MPPCA_BIC"
+  class(result) <- 'MPPCA'
 
   return(result)
 
