@@ -1,5 +1,5 @@
 #' @importFrom stats cov rnorm cmdscale dist
-#' @importFrom mclust dmvnorm mclustBIC
+#' @importFrom mclust dmvnorm mclustBIC summary.mclustBIC summaryMclustBIC
 #' @importFrom stats prcomp qnorm sd glm gaussian
 #' @importFrom magrittr %>%
 #' @importFrom future plan multisession
@@ -47,7 +47,7 @@ MPPCA_one_q_one_g <- function(data, q, g, max_it = 1000,eps = 0.1, initial.guess
 
       #Estimate groups using packeage mclust
       m<-mclust::mclustBIC(cmdscale(dist(data_scaled)), G=g, verbose = FALSE)
-      res<-summary(m, cmdscale(dist(data_scaled)))
+      res<-summary.mclustBIC(m, cmdscale(dist(data_scaled)))
       tau<-res$z                                             #Probability of each obs belonging to each group
       pi<-res$parameters$pro                                 #Initial guess for membership probabilities
 
@@ -209,7 +209,10 @@ initial_wg = function(g,q, data_scaled, tau){
 exp_z_g = function(g,data_scaled,mu_g,pi,Sig, w_g){
   #This function calculates for a specific group g.
   #g: group index
-  p = dim(w_g[[g]])[1]; q = dim(w_g[[g]])[2]
+
+  p = ifelse( is.null(dim(w_g[[g]]))==TRUE, length(w_g[[1]]),  dim(w_g[[g]])[1])
+  q = ifelse( is.null(dim(w_g[[g]]))==TRUE, 1,  dim(w_g[[g]])[2])
+
   res = dmvnorm(data_scaled,mu_g[[g]], w_g[[g]]%*%t(w_g[[g]])+ Sig*diag(p),log=TRUE) + log(pi[g])
   res = exp(res)
   res = matrix(res, ncol=1); return(res)
@@ -218,7 +221,10 @@ exp_z_g = function(g,data_scaled,mu_g,pi,Sig, w_g){
 
 compute_tau = function(data_scaled, mu_g, pi, Sig, w_g){
   #Apply the previous function to all groups
-  p = dim(w_g[[1]])[1]; q = dim(w_g[[1]])[2]; g = length(w_g)
+  p = ifelse( is.null(dim(w_g[[1]]))==TRUE, length(w_g[[1]]),  dim(w_g[[1]])[1])
+  q = ifelse( is.null(dim(w_g[[1]]))==TRUE, 1,  dim(w_g[[1]])[2])
+  g = length(w_g)
+
   z = sapply(X = seq(1,g,1), exp_z_g, data_scaled, mu_g, pi,Sig, w_g)
   #Normalize by the sum
   tau<-z/apply(z,1,sum); colnames(tau) = seq(1,g,1)
@@ -229,7 +235,8 @@ e_uig = function(w_g, mu_g, Sig, data_scaled){
 
   e_uig_i = function(index, w_g, mu_g, Sig,data_scaled){
     g = length(w_g)
-    p = dim(w_g[[g]])[1];  q = dim(w_g[[g]])[2];
+    p = ifelse( is.null(dim(w_g[[g]]))==TRUE, length(w_g[[g]]),  dim(w_g[[g]])[1])
+    q = ifelse( is.null(dim(w_g[[g]]))==TRUE, 1,  dim(w_g[[g]])[2])
     ind = sapply(seq(1,length(w_g),1),e_uig_i_g, index, w_g,mu_g, Sig, data_scaled)
     #colnames(ind) =  sub(" ", "",paste(rep("group", g), seq(1,g,1)))
     #rownames(ind) = sub(" ", "",paste(rep("u", q), seq(1,q,1)))
@@ -239,13 +246,18 @@ e_uig = function(w_g, mu_g, Sig, data_scaled){
   }
 
   g = length(w_g)
-  p = dim(w_g[[g]])[1]; q = dim(w_g[[g]])[2]; n = nrow(data_scaled)
+  p = ifelse( is.null(dim(w_g[[g]]))==TRUE, length(w_g[[g]]),  dim(w_g[[g]])[1])
+  q = ifelse( is.null(dim(w_g[[g]]))==TRUE, 1,  dim(w_g[[g]])[2])
+  n = nrow(data_scaled)
   all = sapply(seq(1,n,1),e_uig_i, w_g,mu_g, Sig, data_scaled)
   return(all)
 }
 
 e_uig_i_g = function(g,index,w_g, mu_g, Sig, data_scaled){
-  p = dim(w_g[[g]])[1]; q = dim(w_g[[g]])[2]; g = as.numeric(length(w_g))
+  g = as.numeric(length(w_g))
+  p = ifelse( is.null(dim(w_g[[g]]))==TRUE, length(w_g[[g]]),  dim(w_g[[g]])[1])
+  q = ifelse( is.null(dim(w_g[[g]]))==TRUE, 1,  dim(w_g[[g]])[2])
+
   data_scaled = as.matrix(data_scaled)
   x_minus_mu = data_scaled[index,] - mu_g[[g]]
   x_minus_mu = matrix(x_minus_mu, nrow = 1)
@@ -257,7 +269,8 @@ e_uig_i_g = function(g,index,w_g, mu_g, Sig, data_scaled){
 
 
 E_uig_uig_i_g = function(index, g, w_g, Sig, e_uig){
-  q = dim(w_g[[g]])[2];
+  q = ifelse( is.null(dim(w_g[[g]]))==TRUE, 1,  dim(w_g[[g]])[2])
+
   M = t(w_g[[g]])%*%w_g[[g]] + Sig*diag(q)               #DOUBT
   res = Sig*solve(M) + e_uig[[index]]%*%t(e_uig[[index]])
   out=list(); out[[1]] <- res
@@ -289,7 +302,9 @@ pi_est = function(g,data_scaled, tau){
 
 w_g_hat = function(g, data_scaled, Sig, tau, w_g, mu_g){
 
-  p = dim(w_g[[g]])[1]; q = dim(w_g[[g]])[2]
+  p = ifelse( is.null(dim(w_g[[g]]))==TRUE, length(w_g[[g]]),  dim(w_g[[g]])[1])
+  q = ifelse( is.null(dim(w_g[[g]]))==TRUE, 1,  dim(w_g[[g]])[2])
+
   data_g<-sweep(data_scaled,2,mu_g[[g]],"-")
   data_g = as.matrix(data_g)
 
@@ -306,7 +321,9 @@ w_g_hat = function(g, data_scaled, Sig, tau, w_g, mu_g){
 
 sigma_aux = function(g, data_scaled, mu_g, w_g_new, w_g, Sig, pi, tau){
 
-  p= dim(w_g_new[[1]])[1]; q= dim(w_g_new[[1]])[2]
+  p = ifelse( is.null(dim(w_g[[g]]))==TRUE, length(w_g[[g]]),  dim(w_g[[g]])[1])
+  q = ifelse( is.null(dim(w_g[[g]]))==TRUE, 1,  dim(w_g[[g]])[2])
+
   data_g<-sweep(data_scaled,2,mu_g[[g]],"-")
   data_g = as.matrix(data_g)
 
@@ -332,8 +349,8 @@ observed_log_lik_mppca = function(data_scaled, mu_g, w_g, Sig, pi, tau){
   g = ncol(tau)
 
   single_group = function(g,data_scaled, mu_g, w_g, Sig, pi, tau){
-    p = dim(w_g[[1]])[1]; g = as.numeric(length(w_g))
-
+    g = as.numeric(length(w_g))
+    p = ifelse( is.null(dim(w_g[[g]]))==TRUE, length(w_g[[g]]),  dim(w_g[[g]])[1])
     store_g<-tau[,g]*log(pi[g]) + tau[,g]*dmvnorm(data_scaled, mu_g[[g]], w_g[[g]]%*%t(w_g[[g]])+Sig*diag(p),log = TRUE)
     store_g = matrix(store_g, ncol = 1)
     return(store_g)

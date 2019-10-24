@@ -4,10 +4,12 @@
 \alias{plot.MPPCA_BIC}
 \title{Heatmap of BIC values for different g and q.}
 \usage{
-\method{plot}{MPPCA_BIC}(bic_results)
+\method{plot}{MPPCA_BIC}(x, ...)
 }
 \arguments{
-\item{bic_results}{pbject of class MPPCA_BIC from MPPCA results}
+\item{x}{object of class MPPCA_BIC from MPPCA results}
+
+\item{...}{a}
 }
 \description{
 Heatmap of BIC values for different g and q.

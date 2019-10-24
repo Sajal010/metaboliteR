@@ -2,7 +2,7 @@
 #'
 #' Fits Mixtures of Probabilistic Principal Components model to data.
 #'
-#' @importFrom mclust dmvnorm
+#' @importFrom mclust dmvnorm mclustBIC summary.mclustBIC summaryMclustBIC
 #' @importFrom ggplot2 ggplot
 #' @importFrom magrittr %>%
 #' @importFrom future plan multisession
@@ -37,7 +37,7 @@ MPPCA = function(data, q_min, q_max, g_min, g_max, eps = 0.1, B=100){
   BICs = unlist(lapply(out, "[" , "bic"));
 
   # Recovering the groups
-  get_g = lapply(out, "[[", pi)
+  get_g = lapply(out, "[[", "pi")
   get_g = lengths(get_g)
   get_g[get_g ==0] <-1
   # Recovering the components
