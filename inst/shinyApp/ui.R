@@ -39,53 +39,72 @@ shinyUI(ui = tagList(
     # Data --------------------------------------------------------------------
     tabPanel("Data",
              sidebarPanel(
-               conditionalPanel(condition="input.data_tabs=='main'",
-                                fileInput("main_file", h4("File input:", bsButton("main_data_tooltip", label = "",
-                                                                                  icon = icon("question"), size = "extra-small")),
-                                          multiple = F, accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"),
-                                          placeholder = "Enter Metabolomic Data Here"),
-                                bsPopover("main_data_tooltip", title="",
-                                          content="Please make sure: rows are samples/observations, columns are spectral bins",
-                                          trigger = "hover"),
 
-                                tags$hr(),
-                                h4(helpText("Select the read.table parameters below")),
-                                checkboxInput(inputId = 'header', label = 'Header', value = TRUE),
-                                # checkboxInput(inputId = "stringAsFactors", "stringAsFactors", FALSE),
-                                radioButtons(inputId = 'sep', label = 'Separator', choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
-                                # sliderInput("main_slider", h4("Number of rows shown:"), 1, 50, 10)
+               fileInput("main_file", h4("File input:", bsButton("main_data_tooltip", label = "",
+                                                                 icon = icon("question"), size = "extra-small")),
+                         multiple = F, accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"),
+                         placeholder = "Enter Metabolomic Data Here"),
+               bsPopover("main_data_tooltip", title="",
+                         content="Please make sure: rows are samples/observations, columns are spectral bins",
+                         trigger = "hover"),
 
-               ),
+               tags$hr(),
+               h4(helpText("Select the read.table parameters below")),
+               checkboxInput(inputId = 'header', label = 'Header', value = TRUE),
+               # checkboxInput(inputId = "stringAsFactors", "stringAsFactors", FALSE),
+               radioButtons(inputId = 'sep', label = 'Separator', choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
 
-               conditionalPanel(condition="input.data_tabs=='covariates'",
-                                fileInput("covariates_file", h4("File input:", bsButton("covariates_data_tooltip", label = "",
-                                                                                        icon = icon("question"), size = "extra-small")),
-                                          multiple = F, accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"),
-                                          placeholder = "Enter Covariates Data Here"),
-                                bsPopover("covariates_data_tooltip", title="",
-                                          content="Please make sure: rows are samples/observations, columns are covariates",
-                                          trigger = "hover"),
+               sliderInput("cov_slider", h4("Covariates Columns:"), 0, 10, c(0,0)),
+               sliderInput("label_slider", h4("Group Labels Columns:"), 0, 10, 0)
 
-                                tags$hr(),
-                                h5(helpText("Select the read.table parameters below")),
-                                checkboxInput(inputId = 'cov_header', label = 'Header', value = TRUE),
-                                # checkboxInput(inputId = "stringAsFactors", "stringAsFactors", FALSE),
-                                radioButtons(inputId = 'cov_sep', label = 'Separator', choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
-                                # sliderInput("cov_slider", h4("Number of rows shown:"), 1, 50, 10)
-               ),
 
-               conditionalPanel(condition="input.data_tabs=='labels'",
-                                fileInput("labels_file", h4("File input:"), multiple = F,
-                                          accept = c("text/csv", "text/comma-separated-values, text/plain",
-                                                     ".csv"), placeholder = "Enter Labels Data Here"),
-
-                                tags$hr(),
-                                h5(helpText("Select the read.table parameters below")),
-                                checkboxInput(inputId = 'lab_header', label = 'Header', value = TRUE),
-                                # checkboxInput(inputId = "stringAsFactors", "stringAsFactors", FALSE),
-                                radioButtons(inputId = 'lab_sep', label = 'Separator', choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
-                                # sliderInput("lab_slider", h4("Number of rows shown:"), 1, 50, 10)
-               )
+               # conditionalPanel(condition="input.data_tabs=='main'",
+               #                  fileInput("main_file", h4("File input:", bsButton("main_data_tooltip", label = "",
+               #                                                                    icon = icon("question"), size = "extra-small")),
+               #                            multiple = F, accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"),
+               #                            placeholder = "Enter Metabolomic Data Here"),
+               #                  bsPopover("main_data_tooltip", title="",
+               #                            content="Please make sure: rows are samples/observations, columns are spectral bins",
+               #                            trigger = "hover"),
+               #
+               #                  tags$hr(),
+               #                  h4(helpText("Select the read.table parameters below")),
+               #                  checkboxInput(inputId = 'header', label = 'Header', value = TRUE),
+               #                  # checkboxInput(inputId = "stringAsFactors", "stringAsFactors", FALSE),
+               #                  radioButtons(inputId = 'sep', label = 'Separator', choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
+               #                  # sliderInput("main_slider", h4("Number of rows shown:"), 1, 50, 10)
+               #
+               # ),
+               #
+               # conditionalPanel(condition="input.data_tabs=='covariates'",
+               #                  fileInput("covariates_file", h4("File input:", bsButton("covariates_data_tooltip", label = "",
+               #                                                                          icon = icon("question"), size = "extra-small")),
+               #                            multiple = F, accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"),
+               #                            placeholder = "Enter Covariates Data Here"),
+               #                  bsPopover("covariates_data_tooltip", title="",
+               #                            content="Please make sure: rows are samples/observations, columns are covariates",
+               #                            trigger = "hover"),
+               #
+               #                  tags$hr(),
+               #                  h5(helpText("Select the read.table parameters below")),
+               #                  checkboxInput(inputId = 'cov_header', label = 'Header', value = TRUE),
+               #                  # checkboxInput(inputId = "stringAsFactors", "stringAsFactors", FALSE),
+               #                  radioButtons(inputId = 'cov_sep', label = 'Separator', choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
+               #                  # sliderInput("cov_slider", h4("Number of rows shown:"), 1, 50, 10)
+               # ),
+               #
+               # conditionalPanel(condition="input.data_tabs=='labels'",
+               #                  fileInput("labels_file", h4("File input:"), multiple = F,
+               #                            accept = c("text/csv", "text/comma-separated-values, text/plain",
+               #                                       ".csv"), placeholder = "Enter Labels Data Here"),
+               #
+               #                  tags$hr(),
+               #                  h5(helpText("Select the read.table parameters below")),
+               #                  checkboxInput(inputId = 'lab_header', label = 'Header', value = TRUE),
+               #                  # checkboxInput(inputId = "stringAsFactors", "stringAsFactors", FALSE),
+               #                  radioButtons(inputId = 'lab_sep', label = 'Separator', choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
+               #                  # sliderInput("lab_slider", h4("Number of rows shown:"), 1, 50, 10)
+               # )
 
              ),
              mainPanel(

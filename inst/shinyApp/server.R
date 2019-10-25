@@ -15,7 +15,10 @@ shinyServer(function(input, output, session) {
     output$main_data_table <- renderDataTable({ # Render Table
         if(is.null(main_data())){return ()}
         # head(main_data(), input$lab_slider)
-        main_data()
+        main_columns <- 1:ncol(main_data())
+        main_columns <- main_columns[!main_columns %in% input$cov_slider[1]:input$cov_slider[2]]
+        main_columns <- main_columns[main_columns!=input$label_slider]
+        main_data()[, main_columns]
     }, options = list(pageLength=10))
 
     main_file_name <- reactive({ # Obtain file name
@@ -28,9 +31,17 @@ shinyServer(function(input, output, session) {
 
     ## Covariates Data
     covariates_data <- reactive({ # Read data
-        file1 <- input$covariates_file
-        if(is.null(file1)){return()}
-        read.table(file=file1$datapath, sep=input$cov_sep, header = input$cov_header, check.names = F)
+        # file1 <- input$covariates_file
+        # if(is.null(file1)){return()}
+        # read.table(file=file1$datapath, sep=input$cov_sep, header = input$cov_header, check.names = F)
+        if(input$cov_slider[1]==input$cov_slider[2]) {
+            cov_data <- as.data.frame(main_data()[, input$cov_slider[1]])
+            colnames(cov_data) <- colnames(main_data())[input$cov_slider[1]]
+            cov_data
+
+        } else {
+            main_data()[, input$cov_slider[1]:input$cov_slider[2]]
+        }
     })
 
     output$covariates_data_table <- renderDataTable({ # Render Table
@@ -42,41 +53,48 @@ shinyServer(function(input, output, session) {
         covariates_data()
     }, options = list(pageLength=10))
 
-    covariates_file_name <- reactive({ # Obtain file name
-        inFile <- input$covariates_file
-        if (is.null(inFile))
-            return(NULL)
-        return (inFile$name)
-    })
-    output$covariates_file_name <- renderText({ covariates_file_name() })
+    # covariates_file_name <- reactive({ # Obtain file name
+    #     inFile <- input$covariates_file
+    #     if (is.null(inFile))
+    #         return(NULL)
+    #     return (inFile$name)
+    # })
+    # output$covariates_file_name <- renderText({ covariates_file_name() })
 
     ## Labels Data
     labels_data <- reactive({ # Read data
-        file1 <- input$labels_file
-        if(is.null(file1)){return(-1)}
-        read.table(file=file1$datapath, sep=input$lab_sep, header = input$lab_header, check.names = F)
+        # file1 <- input$labels_file
+        # if(is.null(file1)){return(-1)}
+        # read.table(file=file1$datapath, sep=input$lab_sep, header = input$lab_header, check.names = F)
+        label_data <- as.data.frame(main_data()[, input$label_slider])
+        colnames(label_data) <- colnames(main_data())[input$label_slider]
+        label_data
     })
 
     output$labels_data_table <- renderDataTable({ # Render Table
-        if(labels_data()==-1){return ()}
+        # if(labels_data()==-1){return ()}
+        # validate(
+        #     need(nrow(labels_data()) == nrow(main_data()),
+        #          "Please make sure equal rows in main and covariates data")
+        # )
+        # validate(
+        #     need(ncol(labels_data()) == 1,
+        #          "Only accepts 1 column of labelling data")
+        # )
         validate(
-            need(nrow(labels_data()) == nrow(main_data()),
-                 "Please make sure equal rows in main and covariates data")
-        )
-        validate(
-            need(ncol(labels_data()) == 1,
-                 "Only accepts 1 column of labelling data")
+            need(!input$label_slider %in% input$cov_slider[1]:input$cov_slider[2],
+                 "Group Labels are using Covariates Columns")
         )
         labels_data()
     }, options = list(pageLength=10))
 
-    labels_file_name <- reactive({ # Obtain file name
-        inFile <- input$labels_file
-        if (is.null(inFile))
-            return(NULL)
-        return (inFile$name)
-    })
-    output$labels_file_name <- renderText({ labels_file_name() })
+    # labels_file_name <- reactive({ # Obtain file name
+    #     inFile <- input$labels_file
+    #     if (is.null(inFile))
+    #         return(NULL)
+    #     return (inFile$name)
+    # })
+    # output$labels_file_name <- renderText({ labels_file_name() })
 
 
 
