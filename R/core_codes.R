@@ -5,35 +5,47 @@
 #' @importFrom future plan multisession
 #' @importFrom future.apply future_lapply
 #' @importFrom furrr future_map
-PPCA_one_q <- function(data, covariates_data, q, B, eps = 0.01, max_it = 1000, est.sd = FALSE, w.sd = FALSE){
-
-  #B is the number of bootstrap replicas to estimate loadings sd
+PPCA_one_q <- function(data, covariates_data, q, eps = 0.01, max_it = 1000, initial_guesses){
 
   # Initialise variables
   n <- nrow(data) # total number of spectral profiles
   p <- ncol(data) # total number of spectral bins
 
-  data.pca <- prcomp(data, center = TRUE) # Perform PCA on data
-  W <- data.pca$rotation[,1:q]            # Initial guess for Loading Matrix
-  W <- matrix(W, ncol=q)                  # Making sure W is in matrix form
-  sigma2 <- 1                             # Initial guess for sigma2
-
   x_minus_mu <- t(scale(data, scale = FALSE)) #Scaling the data
 
   if(missing(covariates_data)){
     number_of_free_param <- (p * q) - (0.5 * q * (q - 1)) + 1
-
-  }
-  else {
+  } else {
     covariates_data <- as.data.frame(covariates_data)
     covariates = manipulate_covariates(covariates_data)
     L <- ncol(covariates)-1 # total number of covariates after data manipulation
     number_of_free_param <- (p * q) - (0.5 * q * (q - 1)) + (q * (L + 1)) + 1
+  }
+
+  if(missing(initial_guesses)){ #Initial guesses not provided
+
+    data.pca <- prcomp(data, center = TRUE) # Perform PCA on data
+    W <- data.pca$rotation[,1:q]            # Initial guess for Loading Matrix
+    W <- matrix(W, ncol=q)                  # Making sure W is in matrix form
+    sigma2 <- 1                             # Initial guess for sigma2
+
+    if(!missing(covariates_data)){
 
     M_initial <- t(W)%*%W + sigma2*diag(q)
     delta_initial <- t(W)%*%x_minus_mu  # Formula from package, don't know why
     u.initial <- solve(M_initial)%*%t(W)%*%x_minus_mu + sigma2*solve(M_initial)%*%delta_initial # delta equal expected of u
     alpha_initial <- t(sapply(seq(1,q), getAlpha, u.initial, covariates_data))  # alpha is coefficient based on linear model
+
+    }
+
+  } else { #If initial guesses are provided
+
+    W = initial_guesses$loadings
+    sigma2 = initial_guesses$sigma2
+
+    if(!missing(covariates_data)){
+    alpha_initial = initial_guesses$alpha
+    }
 
   }
 
@@ -109,21 +121,6 @@ PPCA_one_q <- function(data, covariates_data, q, B, eps = 0.01, max_it = 1000, e
   communality <- t(W.new)%*%W.new
   PoV <- communality[q,q]/(tr(communality)+(sigma2.new*p)) # Proportion of variance
 
-  if (w.sd == TRUE){
-    loadings_sd = loadings_std(data, q, B=B)
-  } else {
-    loadings_sd = NULL
-  }
-
-  if (est.sd == TRUE){
-    boot = loadings_alpha_std(data, covariates_data, q, B)
-    loadings_sd = boot$sd_loads
-    alpha_sd = boot$sd_alpha
-  } else {
-    loadings_sd = NULL
-    alpha_sd = NULL
-  }
-
   score_var <- sigma2.new * solve((t(W.new) %*% W.new) +
                                     (sigma2.new * diag(ncol(W.new))))
   rownames(score_var) <- c(paste0("PC", 1:q))
@@ -146,7 +143,6 @@ PPCA_one_q <- function(data, covariates_data, q, B, eps = 0.01, max_it = 1000, e
     #### Outputs ##
     output <- list(sigma2 = sigma2.new,
                    loadings = loadings.new,
-                   loadings_sd = loadings_sd,
                    score = score,
                    max_ll_results = max_ll_results,
                    bic = bic_results,
@@ -159,10 +155,8 @@ PPCA_one_q <- function(data, covariates_data, q, B, eps = 0.01, max_it = 1000, e
     #### Outputs ##
     output <- list(sigma2 = sigma2.new,
                    alpha = alpha.new,
-                   alpha_sd = alpha_sd,
                    influence = influence.new, # alpha is influence
                    loadings = loadings.new,
-                   loadings_sd = loadings_sd,
                    score = score,
                    max_ll_results = max_ll_results,
                    bic = bic_results,
@@ -184,12 +178,12 @@ PPCA_multi_q = function(data, covariates_data, q_min, q_max, eps = 0.01, max_it 
 
   if(missing(covariates_data)) {
     output <- future_lapply(X, function(x) {
-      EM <- PPCA_one_q(data, q = x,eps = 0.01, w.sd = FALSE)
+      EM <- PPCA_one_q(data, q = x,eps = 0.01)
     })
   }
   else {
     output <- future_lapply(X, function(x) {
-      EM <- PPCA_one_q(data, covariates_data = covariates_data, q = x, eps = 0.01, w.sd = FALSE)
+      EM <- PPCA_one_q(data, covariates_data = covariates_data, q = x, eps = 0.01)
     })
   }
 
@@ -241,11 +235,11 @@ getAlpha <- function(index, delta, covariates_data){
 
 
 # CHANGE THE INITIAL!!
-loadings_std = function(data, q, B){
+loadings_std = function(data, q, B, initial_guesses){
   one_replica = function(data,q){
     n = nrow(data)
     data_boot = data[sample(nrow(data),size=n,replace=TRUE),] #sample the original data set
-    EM = PPCA_one_q(data_boot,q=q, eps=0.01)
+    EM = PPCA_one_q(data_boot,q=q, eps=0.01, initial_guesses = initial_guesses)
     out = EM$loadings
     return(out)
   }
@@ -261,15 +255,18 @@ loadings_std = function(data, q, B){
   return(sd_loading)
 }
 
-loadings_alpha_std = function(data,covariates_data, q, B){
+loadings_alpha_std = function(data,covariates_data, q, B, initial_guesses){
+
+  covariates_data = as.data.frame(covariates_data);
+  L = ncol(covariates_data); p = ncol(data)
+
   one_replica = function(data,covariates_data,q){
     n = nrow(data); data = as.matrix(data)
-    covariates_data = as.data.frame(covariates_data); n_var = ncol(covariates_data)
     order = sample(nrow(data),size=n,replace=TRUE)
     data_boot = data[order,] #sample the original data set
     cov_boot = covariates_data[order,]
 
-    EM = PPCA_one_q(data_boot,cov_boot,q=q)
+    EM = PPCA_one_q(data_boot,cov_boot,q=q,initial_guesses= initial_guesses)
     out = list(); out[[1]] = EM$loadings; out[[2]] = EM$alpha
     return(out)
   }
@@ -282,12 +279,12 @@ loadings_alpha_std = function(data,covariates_data, q, B){
   loads = lapply(list_boot, "[", 1)
   alphas = lapply(list_boot, "[", 2)
 
-  to_matrix = function(list, q){
-    matrix(unlist(list), ncol = q)
+  to_matrix = function(list, n_col){
+    matrix(unlist(list), ncol = n_col)
   }
 
-  alphas = lapply(alphas, to_matrix, q)
-  loads = lapply(loads, to_matrix, q)
+  alphas = lapply(alphas, to_matrix, n_col = L + 1)
+  loads = lapply(loads, to_matrix, n_col = q)
 
   sd_alpha = apply(simplify2array(alphas), c(1,2), sd)
   sd_loads = apply(simplify2array(loads), c(1,2), sd)
