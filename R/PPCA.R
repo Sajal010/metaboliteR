@@ -103,7 +103,7 @@ PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_i
     #loading estimate and loading confidence interval.
     #index: number of the component
     get_table = function(data,est,lower,upper, index){
-      significant = sign(lower[,index]) != sign(upper[,index])
+      significant = sign(lower[,index]) == sign(upper[,index])
       sig_names = matrix(colnames(data)[significant == TRUE], ncol =1)
       result = cbind(sig_names, est[significant == TRUE, index], lower[significant == TRUE,index], upper[significant==TRUE,index])
       colnames(result) = c("variable", "loading", "lower_bound", "upper_bound")
