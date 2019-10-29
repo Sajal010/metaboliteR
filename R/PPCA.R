@@ -118,6 +118,7 @@ PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_i
 
     #confidence interval for influence
 
+    if(!missing(covariates_data)){
     lower_CI_alpha <- output$alpha - (qnorm(conf_level+(1-conf_level)/2)*alpha_sd)/sqrt(n)
     upper_CI_alpha <- output$alpha + (qnorm(conf_level+(1-conf_level)/2)*alpha_sd)/sqrt(n)
 
@@ -135,6 +136,7 @@ PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_i
     output_covs = sapply(seq(1,q,1), sig_cov, simplify = FALSE, alpha = output$alpha,
                          lower = lower_CI_alpha, upper = upper_CI_alpha)
     class(output_covs) <- "influence_report"
+    }
 
   }
 
