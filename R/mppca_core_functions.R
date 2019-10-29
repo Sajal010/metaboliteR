@@ -15,25 +15,19 @@ MPPCA_one_q_one_g <- function(data, q, g, max_it = 1000,eps = 0.1, initial.guess
     PPCA_one_q(data, q=q, eps = eps)
   } else if (g>1) {
 
-    #############################
-    #     MPPCA algorithm
-    #############################
     n <- nrow(data)
     p <- ncol(data)
 
     data_scaled <- scale(data, scale = FALSE) #Scaling the data
     df <- (p*q) - (0.5 *q*(q - 1)) + 1 + (g-1)
 
-    #####################
-    #     Initialize
-    #####################
+    ## Initialize
+
     ll_vector = c()
     iter <- 1
     conv <- FALSE
 
-    #####################
-    #  Initial guesses
-    #####################
+    ##  Initial guesses
 
     if(is.null(initial.guesses) == FALSE){
 
@@ -95,21 +89,15 @@ MPPCA_one_q_one_g <- function(data, q, g, max_it = 1000,eps = 0.1, initial.guess
 
     }
 
-    #################################
     #           CYCLE 1
-    #################################
 
     while(conv==FALSE  & iter <= max_it){
 
-      #######################
       #     Estep 1
-      #######################
 
       tau = compute_tau(data_scaled, mu_g, pi, Sig, w_g)
 
-      #######################
       #     Mstep 1
-      #######################
 
       #update MU
       mu_g_new =sapply(seq(1,g,1),mu_g_est,data_scaled, tau)
@@ -117,13 +105,9 @@ MPPCA_one_q_one_g <- function(data, q, g, max_it = 1000,eps = 0.1, initial.guess
       #update PI (probabilities of membership)
       pi_new =sapply(seq(1,g,1), pi_est,data_scaled,tau)
 
-      #################################
-      #           CYCLE 2
-      #################################
+      ## CYCLE 2
 
-      #######################
-      #     Estep 2
-      #######################
+      ## Estep 2
 
       #1. Recompute tau with new mu and pi
       tau = compute_tau(data_scaled,mu_g_new, pi_new, Sig, w_g)
@@ -134,9 +118,7 @@ MPPCA_one_q_one_g <- function(data, q, g, max_it = 1000,eps = 0.1, initial.guess
       #Compute E[uit uitT]
       E_uu = E_uig_uig(w_g, Sig, e_uig,n)
 
-      #######################
-      #     Mstep 2
-      #######################
+      ##    Mstep 2
 
       #Calculate new W
       w_g_new = sapply(seq(1,g,1), w_g_hat, data_scaled, Sig, tau, w_g, mu_g_new)
@@ -144,9 +126,7 @@ MPPCA_one_q_one_g <- function(data, q, g, max_it = 1000,eps = 0.1, initial.guess
       #Calculate sigma2
       Sig_new = sigma2_hat_mppca(data_scaled,mu_g = mu_g_new, w_g_new, w_g, Sig,pi = pi_new,tau)
 
-      ############################
-      #   Assess convergence
-      ############################
+      ##   Assess convergence
       ll = observed_log_lik_mppca(data_scaled, mu_g_new, w_g_new, Sig_new, pi_new, tau)
       ll_vector = c(ll_vector, ll)
 
