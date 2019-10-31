@@ -42,8 +42,8 @@ pages:
         - testing
     script:
         - ls
-        - gem install jekyll
-        - jekyll build -d public/
+        - bundle install
+        - bundle exec jekyll build -d public
     artifacts:
         paths:
             - public
