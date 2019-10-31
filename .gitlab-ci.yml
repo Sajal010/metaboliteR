@@ -42,6 +42,7 @@ pages:
         - testing
     script:
         - ls
+        - gem install bundler
         - bundle install
         - bundle exec jekyll build -d public
     artifacts:
