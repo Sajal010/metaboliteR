@@ -5,7 +5,6 @@
 #'
 #' @export
 #'
-#' @examples
 #'
 #'
 plot.influence = function(x, ...){
