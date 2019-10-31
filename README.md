@@ -1,22 +1,24 @@
 # metaboliteR
-![pipeline status](https://gitlab.com/metaboliter/metaboliter/badges/master/pipeline.svg)
-[![coverage report](https://gitlab.com/metaboliter/metaboliter/badges/master/coverage.svg)](https://metaboliter.gitlab.io/metaboliter)
+[![pipeline status](https://gitlab.com/metaboliter/metaboliter/badges/master/pipeline.svg)](https://gitlab.com/metaboliter/metaboliter/pipelines)
+[![coverage report](https://gitlab.com/metaboliter/metaboliter/badges/master/coverage.svg)](https://metaboliter.gitlab.io/metaboliter/coverage)
 
 
-R packages of Probabilistic Principal Component Analysis (PPCA) for metabolomic data
+### R packages of Probabilistic Principal Component Analysis (PPCA) for metabolomic data
 
 If you didn't install this from CRAN, make sure to install dependencies in your computer for the package to work.
 
 Run the following code: 
 `remotes::install_deps(dependencies = TRUE)`
 
-Original PPCA function repositary: https://gitlab.com/metabol/ppca
+#### Websites
 
-GitLab Link: https://gitlab.com/metaboliter/metaboliter
+[Original PPCA function repositary](https://gitlab.com/metabol/ppca)
 
-Page link: https://metaboliter.gitlab.io/metaboliter
+[GitLab](https://gitlab.com/metaboliter/metaboliter)
 
-ShinyApp link: can only host app when package is available in CRAN
+[Webpage](https://metaboliter.gitlab.io/metaboliter)
 
-Website Link: 
+ShinyApp: can only host app when package is available in CRAN
+
+
 
