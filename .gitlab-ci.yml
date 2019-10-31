@@ -41,9 +41,8 @@ pages:
         - testing
     script:
         - ls
-        - mkdir .public
-        - cp -r * .public
-        - mv .public public
+        - Rscript -e 'install.packages("pkgdown")'
+        - Rscript -e 'pkgdown::build_site(override = list(destination = "public"), preview=FALSE)'
     artifacts:
         paths:
             - public
