@@ -37,7 +37,7 @@ testing:
 
 pages:
     stage: deploy
-    image: ruby:2.1
+    image: ruby:2.3
     dependencies:
         - testing
     script:
