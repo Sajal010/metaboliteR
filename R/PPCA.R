@@ -25,15 +25,13 @@ PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_i
   if(q_min == q_max){ # For same q case
     if(missing(covariates_data)) {
       all_results = PPCA_one_q(data, q = q_min, eps = eps, max_it= max_it)
-    }
-    else {
+    } else {
       all_results = PPCA_one_q(data, covariates_data = covariates_data, q = q_min, eps = eps, max_it= max_it)
     }
     q = q_min
     bic_values <- all_results$bic
     PoV_values <- all_results$PoV
-  }
-  else { # For different q
+  } else { # For different q
     if(missing(covariates_data)) {
       all_results = PPCA_multi_q(data, q_min = q_min, q_max = q_max,eps = eps, max_it= max_it)
     } else {
@@ -117,6 +115,29 @@ PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_i
 
     names(significant_x) <- c(paste0("PC", 1:q)) # Rename col names
     class(significant_x) <- 'PPCA_significant'
+
+    #confidence interval for influence
+
+    if(!missing(covariates_data)){
+    lower_CI_alpha <- output$alpha - (qnorm(conf_level+(1-conf_level)/2)*alpha_sd)/sqrt(n)
+    upper_CI_alpha <- output$alpha + (qnorm(conf_level+(1-conf_level)/2)*alpha_sd)/sqrt(n)
+
+    #Significance of covariate in each PC
+    sig_cov = function(index,alpha, lower, upper){
+      alpha = alpha[index,]; lower = lower[index,]; upper = upper[index,]
+      result = cbind(alpha, lower, upper)
+      colnames(result)= c("estimate", "lower", "upper")
+      significant = sign(result[,2]) == sign(result[,3])
+      result = cbind(result, significant)
+      return(result)
+    }
+
+    #q = nrow(output$alpha)
+    output_covs = sapply(seq(1,q,1), sig_cov, simplify = FALSE, alpha = output$alpha,
+                         lower = lower_CI_alpha, upper = upper_CI_alpha)
+    class(output_covs) <- "influence_report"
+    }
+
   }
 
   if(q_min != q_max) {
@@ -130,6 +151,11 @@ PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_i
   output$diagnostic$PoV_values <- PoV_values
   output$max_ll <- output$max_ll_results[length(output$max_ll_results)]
   output$max_ll_results <- NULL
+
+  if(exists('output_covs')==TRUE){
+    output[['influence_report']] = output_covs
+  }
+
   if(exists('significant_x')==TRUE){
     output[['significant_x']] = significant_x
   }
