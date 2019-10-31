@@ -195,6 +195,8 @@ exp_z_g = function(g,data_scaled,mu_g,pi,Sig, w_g){
 
   res = dmvnorm(data_scaled,mu_g[[g]], w_g[[g]]%*%t(w_g[[g]])+ Sig*diag(p),log=TRUE) + log(pi[g])
   res = exp(res)
+  res[res == Inf] <- 1
+  res[res == -Inf] <- -1
   res = matrix(res, ncol=1); return(res)
 }
 
@@ -208,6 +210,7 @@ compute_tau = function(data_scaled, mu_g, pi, Sig, w_g){
   z = sapply(X = seq(1,g,1), exp_z_g, data_scaled, mu_g, pi,Sig, w_g)
   #Normalize by the sum
   tau<-z/apply(z,1,sum); colnames(tau) = seq(1,g,1)
+  tau[is.nan(tau)] <- 1 #corrects numerical issues
   return(tau)
 }
 
