@@ -40,7 +40,7 @@ pages:
     dependencies:
         - testing
     script:
-        - ls
+        - Rscript -e "remotes::install_local()"
         - Rscript -e 'install.packages("pkgdown")'
         - Rscript -e 'pkgdown::build_site(override = list(destination = "public"), preview=FALSE)'
     artifacts:
