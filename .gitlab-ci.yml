@@ -1,3 +1,5 @@
+image: rocker/tidyverse
+
 stages:
   - build
   - test
@@ -5,7 +7,6 @@ stages:
 
 building:
   stage: build
-  image: rocker/tidyverse
   script:
     - R -e "remotes::install_deps(dependencies = TRUE)"
     - R -e 'devtools::check(args = c("--no-examples", "--no-tests"))'
@@ -18,7 +19,6 @@ building:
 
 testing:
     stage: test
-    image: rocker/tidyverse
     allow_failure: true
     when: on_success
     only:
@@ -37,14 +37,13 @@ testing:
 
 pages:
     stage: deploy
-    image: ruby:2.3
     dependencies:
         - testing
     script:
         - ls
-        - gem install bundler
-        - bundle install
-        - bundle exec jekyll build -d public
+        - mkdir .public
+        - cp -r * .public
+        - mv .public public
     artifacts:
         paths:
             - public
