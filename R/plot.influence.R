@@ -1,7 +1,7 @@
 #' Plot influence of covariates
 #'
-#' @param object of class influence_report
-#' @param ...
+#' @param x object of class influence_report
+#' @param ... additional arguments
 #'
 #' @export
 #'

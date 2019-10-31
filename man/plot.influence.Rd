@@ -7,9 +7,9 @@
 \method{plot}{influence}(x, ...)
 }
 \arguments{
-\item{...}{}
+\item{x}{object of class influence_report}
 
-\item{object}{of class influence_report}
+\item{...}{additional arguments}
 }
 \description{
 Plot influence of covariates
