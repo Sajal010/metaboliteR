@@ -1,6 +1,6 @@
 # metaboliteR
 ![pipeline status](https://gitlab.com/metaboliter/metaboliter/badges/master/pipeline.svg)
-[![coverage report](https://gitlab.com/metaboliter/metaboliter/badges/master/coverage.svg)] (https://metaboliter.gitlab.io/metaboliter)
+[![coverage report](https://gitlab.com/metaboliter/metaboliter/badges/master/coverage.svg)](https://metaboliter.gitlab.io/metaboliter)
 
 
 R packages of Probabilistic Principal Component Analysis (PPCA) for metabolomic data
