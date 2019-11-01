@@ -4,10 +4,12 @@
 \alias{plot.influence_report}
 \title{Plot influence of covariates}
 \usage{
-\method{plot}{influence_report}(x, ...)
+\method{plot}{influence_report}(x, PC, ...)
 }
 \arguments{
 \item{x}{object of class influence_report}
+
+\item{PC}{specific principal component}
 
 \item{...}{additional arguments}
 }
