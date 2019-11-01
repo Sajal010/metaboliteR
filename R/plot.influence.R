@@ -4,12 +4,14 @@
 #' @param ... additional arguments
 #'
 #' @export
+#' @export plot.influence_report
 #'
 #'
 #'
-plot.influence = function(x, ...){
+plot.influence_report = function(x, ...){
 
 index = 1
+q = length(x)
 while(index <= q){
 
 plot_cov = x[[index]]
