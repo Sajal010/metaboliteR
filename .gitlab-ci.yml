@@ -27,6 +27,7 @@ testing:
         - Rscript -e "remotes::install_deps(dependencies = TRUE)"
         - Rscript -e 'install.packages("DT")'
         - Rscript -e 'covr::gitlab(quiet = FALSE)'
+        - Rscript -e 'file.create("pkgdown.yml")'
     artifacts:
         paths:
             - public
