@@ -139,33 +139,37 @@ shinyUI(ui = tagList(
                  tabPanel(div("PPCA",id="PPCA_tooltip"), value = "PPCA_tab",
                           bsTooltip("PPCA_tooltip", title="Simple PPCA", trigger = "hover"),
 
-                          h3(helpText('Model Parameters:')),
-                          div(style="display:inline-block",
-                              numericInput("epsilon", label = "Covergence Criterion:", value=0.01, min=1e-5, max=1e2),
+                          conditionalPanel(condition="input.analytics_plot_tabs=='PPCA_description'",
+                                           h3(helpText('Model Parameters:')),
+                                           div(style="display:inline-block",
+                                               numericInput("epsilon", label = "Covergence Criterion:", value=0.01, min=1e-5, max=1e2),
+                                           ),
+                                           div(style="display:inline-block",
+                                               numericInput("max_iter", label = "Max Number of Iteration:", value=1e3, min=1, max=1e6),
+                                           ),
+
+                                           h4("Include Covariates?"),
+                                           checkboxInput(inputId = 'covariates_check', label = 'Tick for Yes (future implement)', value = FALSE),
+                                           radioButtons("choose_q", label = h4("Output Optimize Model?"), choices = c(Use_Optimal_PC=TRUE, Use_Maximum_PC=FALSE)),
+
+                                           sliderInput("PC_slider", h4("Range of Principal Components:"),
+                                                       min = 1, max = 10, value = c(1, 4)),
+                                           sliderInput("bootstrap_n_slider", h4("Numbers of Bootstrap:"), 2, 100, 5),
+                                           bsTooltip("bootstrap_n_slider", title="Higher Bootstrap, Better Uncertainty but Longer Wait Time", trigger = "hover"),
+
+
+                                           tags$h6("Click button to run the model using desired parameters:"),
+                                           div(style="display:inline-block",
+                                               actionButton("submit_para_btn", "Submit Parameters", class = "btn-primary"),
+                                           ),
+                                           div(style="display:inline-block",
+                                               strong(textOutput("optimal_q")),
+                                           ),
+
+                                           tags$hr(),
                           ),
-                          div(style="display:inline-block",
-                              numericInput("max_iter", label = "Max Number of Iteration:", value=1e3, min=1, max=1e6),
-                          ),
-
-                          h4("Include Covariates?"),
-                          checkboxInput(inputId = 'covariates_check', label = 'Tick for Yes (future implement)', value = FALSE),
-                          radioButtons("choose_q", label = h4("Output Optimize Model?"), choices = c(Use_Optimal_PC=TRUE, Use_Maximum_PC=FALSE)),
-
-                          sliderInput("PC_slider", h4("Maximum Principal Components:"),
-                                      min = 1, max = 10, value = c(1, 4)),
-                          sliderInput("bootstrap_n_slider", h4("Numbers of Bootstrap:"), 2, 100, 5),
-                          bsTooltip("bootstrap_n_slider", title="Higher Bootstrap, Better Uncertainty but Longer Wait Time", trigger = "hover"),
 
 
-                          tags$h6("Click button to run the model using desired parameters:"),
-                          div(style="display:inline-block",
-                              actionButton("submit_para_btn", "Submit Parameters", class = "btn-primary"),
-                          ),
-                          div(style="display:inline-block",
-                              strong(textOutput("optimal_q")),
-                          ),
-
-                          tags$hr(),
                           conditionalPanel(condition="input.analytics_plot_tabs!='PPCA_description'",
                                            h3(helpText('Graph Controls:'))
                           ),

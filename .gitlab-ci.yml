@@ -34,12 +34,17 @@ testing:
 # To produce a code coverage report as a GitLab page see
 # https://about.gitlab.com/2016/11/03/publish-code-coverage-report-with-gitlab-pages/
 
+
 pages:
     stage: deploy
     dependencies:
         - testing
     script:
-        - ls
+        - Rscript -e "remotes::install_local()"
+        - Rscript -e 'install.packages("pkgdown")'
+        - Rscript -e 'file.create("pkgdown.yml")'
+        - cp pkgdown.yml public
+        - Rscript -e 'pkgdown::build_site(override = list(destination = "public"), preview=FALSE)'
     artifacts:
         paths:
             - public
