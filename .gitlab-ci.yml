@@ -28,7 +28,7 @@ testing:
         - Rscript -e 'install.packages("DT")'
         - Rscript -e 'covr::gitlab(quiet = FALSE)'
         - Rscript -e 'file.create("pkgdown.yml")'
-        - Rscript -e 'write("pandoc: 2.7.2", file="pkgdown.yml")'
+        - Rscript -e 'write(",", file="pkgdown.yml")'
     artifacts:
         paths:
             - public
