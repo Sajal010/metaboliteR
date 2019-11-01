@@ -1,7 +1,7 @@
 library(shiny)
 library(shinyBS)
 library(shinythemes)
-
+library(shinyjs)
 shinyUI(ui = tagList(
   tags$head(
     tags$style(HTML("
@@ -13,6 +13,7 @@ shinyUI(ui = tagList(
 
   navbarPage(
     theme = shinytheme("lumen"),  # <--- To use a theme, uncomment this
+    useShinyjs(),
     strong("Metabolomic Analytics"), # Main title name
 
     # Home --------------------------------------------------------------------
@@ -149,7 +150,10 @@ shinyUI(ui = tagList(
                                            ),
 
                                            h4("Include Covariates?"),
-                                           checkboxInput(inputId = 'covariates_check', label = 'Tick for Yes (future implement)', value = FALSE),
+
+                                           disabled(checkboxInput(inputId = 'covariates_check', label = span('Tick for Yes', title = "Please make sure covariates data are selected in Data tabs to enable this selection"), value = FALSE)),
+
+
                                            radioButtons("choose_q", label = h4("Output Optimize Model?"), choices = c(Use_Optimal_PC=TRUE, Use_Maximum_PC=FALSE)),
 
                                            sliderInput("PC_slider", h4("Range of Principal Components:"),
@@ -179,7 +183,7 @@ shinyUI(ui = tagList(
                           conditionalPanel(condition="input.analytics_plot_tabs=='main_PPCA_plot'",
                                            sliderInput("main_plot_PC", h4("Principal Component for Main Plot:"), min=1, max=10, value=1, step=1, ticks=F),
                                            sliderInput("conf_int", h4("Confidence Interval:"), min=0.8, max=0.9999, value=0.95, ticks=F),
-                                           sliderInput("n_main", h5("Numbers of Significant Bin for Main Plot"), min=0, max=20, value=5, step=1, ticks=F),
+                                           sliderInput("n_main", h5("Numbers of Significant Bin for Main Plot"), min=1, max=20, value=5, step=1, ticks=F),
                                            downloadButton("dl_significant_btn1", span("Download", title="Download a Table of All Significant Spectral Bins Names"))
                           ),
 
@@ -241,6 +245,7 @@ shinyUI(ui = tagList(
                                   ),
                                   tabPanel("Main Plot", value = "main_PPCA_plot",
                                            plotOutput("PPCA_plot"),
+                                           plotOutput("PPCA_influence_report"),
                                   ),
                                   tabPanel("Score Plots", value = "score_PPCA_plot",
                                            plotOutput("PPCA_plot_score"),

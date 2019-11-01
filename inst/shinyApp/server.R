@@ -114,6 +114,18 @@ shinyServer(function(input, output, session) {
 
 
     # Analytics ---------------------------------------------------------------
+    cov_check <- reactive(input$covariates_check)
+
+    # Check if covariates data are selected
+    cov_column_check <- reactive(input$cov_slider[2])
+    observe(
+        if(cov_column_check() == 0) {
+            disable('covariates_check')
+        }
+        else {
+            enable('covariates_check')
+        }
+    )
 
     observeEvent(input$submit_para_btn,
                  isolate({
@@ -121,14 +133,29 @@ shinyServer(function(input, output, session) {
                      showNotification("Running PPCA...", duration = NULL, id = "ppca_progress",
                                       closeButton = FALSE, type = "message")
 
-                     PPCA_object <- PPCA(main_data(),
-                                         q_min = input$PC_slider[1], q_max=input$PC_slider[2],
-                                         B=input$bootstrap_n_slider, eps = input$epsilon, max_it = input$max_iter,
-                                         choose_q = input$choose_q)
+                     if(cov_check()) { # include covariates
+                         PPCA_object <- PPCA(main_data(), covariates_data = covariates_data(),
+                                             q_min = input$PC_slider[1], q_max=input$PC_slider[2],
+                                             B=input$bootstrap_n_slider, eps = input$epsilon, max_it = input$max_iter,
+                                             choose_q = input$choose_q)
+                     }
+                     else { # no covariates
+                         PPCA_object <- PPCA(main_data(),
+                                             q_min = input$PC_slider[1], q_max=input$PC_slider[2],
+                                             B=input$bootstrap_n_slider, eps = input$epsilon, max_it = input$max_iter,
+                                             choose_q = input$choose_q)
+                     }
+
 
                      output$PPCA_plot <- renderPlot({
                          plot(PPCA_object, PC=input$main_plot_PC, conf_level=input$conf_int, n=input$n_main)
                      })
+
+                     if(!is.null(PPCA_object$influence_report)) {
+                         output$PPCA_influence_report <- renderPlot({
+                             plot(PPCA_object$influence_report, PC=input$main_plot_PC)
+                         })
+                     }
 
                      output$PPCA_plot_score <- renderPlot({
                          if(is.null(labels_data())) {
