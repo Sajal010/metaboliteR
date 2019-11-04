@@ -40,8 +40,7 @@ plot.influence_report = function(x, PC, ...){
       ask(msg = "Press <RETURN> to view the influence plot for the next component: ")
       index = index+1
     }
-  }
-  else {
+  } else {
     plot_cov = x[[PC]]
 
     lower_CI_ylim <- min(plot_cov[,"lower"])
