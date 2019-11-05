@@ -9,6 +9,12 @@ PPCA_one_q <- function(data, covariates_data, q, eps = 0.01, max_it = 1000, init
 
   # Initialise variables
   n <- nrow(data) # total number of spectral profiles
+
+  # for some reason, n will not converge if n <= 2
+  if(n <= 2) {
+    return(print("Data has too little observation"))
+  }
+
   p <- ncol(data) # total number of spectral bins
 
   x_minus_mu <- t(scale(data, scale = FALSE)) #Scaling the data
@@ -107,6 +113,9 @@ PPCA_one_q <- function(data, covariates_data, q, eps = 0.01, max_it = 1000, init
     # complete_ll = complete_loglik(sigma2, W, u = u.new, uu = uu.new, x_minus_mu)
 
     max_ll_results <- c(max_ll_results, max_ll_new)
+    if(Inf %in% max_ll_results) {
+      return(print('Function is not converging'))
+    }
 
     #Checking convergence criterion
     conv = ifelse((length(max_ll_results) <= 1),FALSE,
@@ -365,12 +374,8 @@ max_log_likelihood <- function(data, W, sigma2, delta){
   p <- ncol(data)
   x_minus_mu <- t(scale(data, scale = FALSE))
   variance <- W%*%t(W)+sigma2*diag(p)
-  if(is.na(log(det(variance)))){
-    log_det_variance = 0
-  }
-  else {
-    log_det_variance = log(det(variance))
-  }
+  # log_det_variance = -p*log(10) + log(det(10*variance)) # multiplier in det to deal with numerical issue, number too small det become 0
+  log_det_variance = log(abs(det(variance))) # determinant suppose to be scalar, negative sign may appear which create NaN, sign only indicates orientation
   if(missing(delta)){
     max_log_likelihood_values <- -(0.5*n*p)*log(2*pi) -
       0.5*n*log_det_variance -
