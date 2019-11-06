@@ -16,7 +16,8 @@ shinyServer(function(input, output, session) {
         main_columns <- 1:ncol(original_data())
         main_columns <- main_columns[!main_columns %in% input$cov_slider[1]:input$cov_slider[2]]
         main_columns <- main_columns[main_columns!=input$label_slider]
-        original_data()[, main_columns]
+        apply(original_data()[, main_columns], 2,function (y) scale_data(y,input$scale))
+        #original_data()[, main_columns]
     })
 
     # This reactive output contains the dataset and display the dataset in table format

@@ -56,7 +56,11 @@ shinyUI(ui = tagList(
                radioButtons(inputId = 'sep', label = 'Separator', choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
 
                sliderInput("cov_slider", h4("Covariates Columns:"), 0, 10, c(0,0)),
-               sliderInput("label_slider", h4("Group Labels Columns:"), 0, 10, 0)
+               sliderInput("label_slider", h4("Group Labels Columns:"), 0, 10, 0),
+
+               tags$hr(),
+               h4(helpText("Select the scaling parameters below")),
+               radioButtons(inputId = 'scale', label = 'Scale Type', choices = c(Centering='centering',Autoscale='autoscale',Paretoscale='paretoscale',Rangescale='rangescale', Vastscale='vastscale'), selected = 'centering')
 
 
                # conditionalPanel(condition="input.data_tabs=='main'",
