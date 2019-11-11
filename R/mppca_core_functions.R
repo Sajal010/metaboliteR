@@ -194,7 +194,7 @@ exp_z_g = function(g,data_scaled,mu_g,pi,Sig, w_g){
   q = ifelse( is.null(dim(w_g[[g]]))==TRUE, 1,  dim(w_g[[g]])[2])
 
   res = dmvnorm(data_scaled,mu_g[[g]], w_g[[g]]%*%t(w_g[[g]])+ Sig*diag(p),log=TRUE) + log(pi[g])
-  res = exp(res)
+  #res = exp(res)
   res[res == Inf] <- 1
   res[res == -Inf] <- -1
   res = matrix(res, ncol=1); return(res)
