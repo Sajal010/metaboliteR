@@ -1,0 +1,130 @@
+---
+title: "metaboliteR"
+author: "Luiza Piancastelli, Sajal Kaur Minhas and Xian Yao Gwee"
+output: rmarkdown::html_vignette
+bibliography: citations_metaboliter.bib
+vignette: >
+  %\VignetteIndexEntry{metaboliteR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup}
+library(metaboliteR)
+knitr::opts_chunk$set(cache = TRUE)
+```
+
+The metaboliteR package contains implementation of the methodologies developed for analyzing metabolite data proposed in the articles @ppca, @metsizer and @dppca. The data application examples in this document resamble those in the original papers using simulated data sets.
+
+## PPCA: Probabilistic Principal Component Analysis
+
+PPCA is a dimensionality reduction technique based on a Gaussian latent variable model. Through this model we are able to relate a p-dimensional observed data set to a corresponding q-dimensional latent variable, where $q<<p$. 
+
+Load the metaboliteR package and the Urine Spectra data set.
+```{r}
+library(metaboliteR)
+data("UrineSpectra")
+```
+
+We fit the model using PPCA comand where the minimum and maximum number of principal components are specified in arguments **q_min** and **q_max**. By default, the optimal q is selected based on the BIC criterion. The option **B** controls the number of bootstrap replicas to be run to assess uncertainty of the loadings matrix. The parameter **eps** controls the convergence of the EM algorithm.
+
+```{r, cache=TRUE}
+ppca = PPCA(data = UrineSpectra[[1]],q_min = 1, q_max = 10, B=100, eps = 0.1)
+```
+
+From the model output we can plot the BIC values and proportion of variation explained by each model. The score plot is also avaliable. If groups labels are of interest, they can be assigned to the score plot. According to BIC, the best number of components is 2, which can also be assessed running **ppca$optimal_q**.
+
+```{r fig1,fig.height = 4, fig.width = 8, fig.align = "center"}
+par(mfrow = c(1,2))
+plot(ppca$diagnostic)
+plot(ppca$score, labels = UrineSpectra[[2]][,1])
+```
+
+
+Barplots of spectral bins with loadings that are significantly different from zero are obtained by plotting the model. The spectral bins are in descending order according to the magnitude of the loadings. The user can control how many spectral bins to be shown and of which principal component, the former using the argument **n** and the former supplying a number to **PC**.
+
+```{r fig2, fig.height= 3.5, fig.width= 7.5, fig.align = "center"}
+plot(ppca, PC = 1, n = 10)
+```
+
+Estimates of the model parameters can be assessed in the model output as follows.
+```{r, echo=T, results='hide'}
+ppca$loadings
+ppca$sigma2
+```
+
+Other options are avaliable such as the standard deviation of loadings (**ppca$loading_sd**).
+
+## PPCCA: Probabilistic Principal Component and Covariates Analysis
+
+In the analysis of metabolomic data there are often important covariates that we might wish to take into account. Using PPCCA, dimensionality reduction and modelling of covariates are achieved simultaneously. In metaboliteR package this is done by simply supplying the additional covariate information to the PPCA function. 
+
+In this example we incorporate the covariate weights using the Urine Spectra data set.
+
+```{r fig3, fig.height= 5, fig.width= 7, cache = TRUE}
+weights = UrineSpectra[[2]][,2]
+ppcca = PPCA(data = UrineSpectra[[1]], covariates_data = weights, q_min = 1, q_max = 10, B =100)
+```
+
+We can inspect the significance of the covariates in the each of the components. The selected q is 2, so we plot the covariate influence for these two components in the next commands.
+
+```{r fig4, fig.height= 4, fig.width= 8, message=FALSE, warning=FALSE}
+par(mfrow = c(1,2))
+plot(ppcca$influence_report, PC = 1)
+plot(ppcca$influence_report, PC = 2)
+```
+
+The plot of the object of class **influence_report** facilitates the visualization of the covariate significance in each PC. Here we see that both the intercept and weight are significant in the second principal component but not in the first. Printing this object we can also assess the estimated coefficients and confidence interval.
+
+```{r}
+ppcca$influence_report
+```
+
+Plots of BIC, scores and significant loadings are obtained with the same commands as in the PPCA model.
+
+```{r fig5,fig.height = 4, fig.width = 8, fig.align = "center"}
+par(mfrow = c(1,2))
+plot(ppcca$diagnostic)
+plot(ppcca$score, labels = UrineSpectra[[2]][,1])
+```
+
+```{r fig6, fig.height= 3.5, fig.width= 7.5,fig.align = "center"}
+plot(ppcca, PC = 1, n = 10)
+```
+
+## MPPCA: Mixtures of Probabilistic Principal Components Analysis
+
+If it is of interest to identify underlying group structures in the data, a mixture of PPCA models can be applied. MPPCA model clusters the observations into groups while facilitating dimensionality reduction of metabolomic data. Each observation is assigned to a group with probability $\pi_g$ and a PPCA model is fit to each group.
+
+For this example we load the brain spectra data set and fit the model using the command __MPPCA__. The minimum number and maximum number of groups to be considered are specified in **g_min** and **g_max** and the range of components in **q_min** and **q_max** as before. The number of boostrap replicas __B__ can also be provided to estimate the standard errors for each of g loading matrices.
+
+```{r, message=FALSE, warning=FALSE, echo=T, cache = TRUE, results='hide'}
+data("BrainSpectra")
+mppca = MPPCA(BrainSpectra[[1]], q_min = 1, q_max = 7, g_min = 1, g_max = 4, eps = 0.1)
+```
+
+The BIC criteria selects the optimal number of groups **g** and of principal components which is represented in the following heatmap.
+
+```{r ,fig.height= 6, fig.width= 7,fig.align = "center"}
+plot(mppca$bic_results)
+```
+
+The selected g and q for the brain spectra data set were 4 and 7 respectively. Using the folliwong commands we can assess estimates of the model parameters.
+
+```{r, results='hide'}
+mppca$pi           #probability of group membership
+mppca$loadings     #List of g loadings matrices, one for each group
+mppca$loadings_sd 
+mppca$sigma2       #Variance of the error component
+```
+
+
+
+
+## DPPCA: Dynamic Probabilistic Principal Components 
+
+
+## MetSizeR
+
+
+
