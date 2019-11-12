@@ -194,7 +194,7 @@ exp_z_g = function(g,data_scaled,mu_g,pi,Sig, w_g){
   q = ifelse( is.null(dim(w_g[[g]]))==TRUE, 1,  dim(w_g[[g]])[2])
 
   res = dmvnorm(data_scaled,mu_g[[g]], w_g[[g]]%*%t(w_g[[g]])+ Sig*diag(p),log=TRUE) + log(pi[g])
-  #res = exp(res)
+  res = exp(res)
   res[res == Inf] <- 1
   res[res == -Inf] <- -1
   res = matrix(res, ncol=1); return(res)
@@ -217,28 +217,22 @@ compute_tau = function(data_scaled, mu_g, pi, Sig, w_g){
 e_uig = function(w_g, mu_g, Sig, data_scaled){
 
   e_uig_i = function(index, w_g, mu_g, Sig,data_scaled){
-    g = length(w_g)
-    p = ifelse( is.null(dim(w_g[[g]]))==TRUE, length(w_g[[g]]),  dim(w_g[[g]])[1])
-    q = ifelse( is.null(dim(w_g[[g]]))==TRUE, 1,  dim(w_g[[g]])[2])
+
+    q = ifelse( is.null(dim(w_g[[1]]))==TRUE, 1,  dim(w_g[[1]])[2])
     ind = sapply(seq(1,length(w_g),1),e_uig_i_g, index, w_g,mu_g, Sig, data_scaled)
-    #colnames(ind) =  sub(" ", "",paste(rep("group", g), seq(1,g,1)))
-    #rownames(ind) = sub(" ", "",paste(rep("u", q), seq(1,q,1)))
+
     ind = matrix(ind, nrow = q)
     out = list(); out[[1]] <- ind
     return(out)
   }
 
-  g = length(w_g)
-  p = ifelse( is.null(dim(w_g[[g]]))==TRUE, length(w_g[[g]]),  dim(w_g[[g]])[1])
-  q = ifelse( is.null(dim(w_g[[g]]))==TRUE, 1,  dim(w_g[[g]])[2])
   n = nrow(data_scaled)
   all = sapply(seq(1,n,1),e_uig_i, w_g,mu_g, Sig, data_scaled)
   return(all)
 }
 
 e_uig_i_g = function(g,index,w_g, mu_g, Sig, data_scaled){
-  g = as.numeric(length(w_g))
-  p = ifelse( is.null(dim(w_g[[g]]))==TRUE, length(w_g[[g]]),  dim(w_g[[g]])[1])
+
   q = ifelse( is.null(dim(w_g[[g]]))==TRUE, 1,  dim(w_g[[g]])[2])
 
   data_scaled = as.matrix(data_scaled)

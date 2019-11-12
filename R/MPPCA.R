@@ -21,6 +21,13 @@
 
 MPPCA = function(data, q_min, q_max, g_min, g_max, eps = 0.1, B=100){
 
+  if(q_min == q_max && g_min == g_max){
+
+    mppca = MPPCA_one_q_one_g(data, q = q_min, g = g_min, eps = eps)
+    result = mppca
+
+  } else {
+
   q_sequence = seq(q_min, q_max, 1)
   g_sequence = seq(g_min, g_max, 1)
 
@@ -59,6 +66,13 @@ MPPCA = function(data, q_min, q_max, g_min, g_max, eps = 0.1, B=100){
   index_optimal = which(BICs == max(BICs))
   result = out[[index_optimal]]
 
+  result$q_optimal = opt_q
+  result$g_optimal = opt_g
+  result$bic_results = comb
+  class(result$bic_results) <- "MPPCA_BIC"
+
+  }
+
   initial.guesses = list(w_g = result$loadings,
                          mu_g = result$mu,
                          pi = result$pi,
@@ -71,11 +85,6 @@ MPPCA = function(data, q_min, q_max, g_min, g_max, eps = 0.1, B=100){
   }
 
   result$loadings_sd = loadings_sd
-  result$q_optimal = opt_q
-  result$g_optimal = opt_g
-  result$bic_results = comb
-
-  class(result$bic_results) <- "MPPCA_BIC"
   class(result) <- 'MPPCA'
 
   return(result)
