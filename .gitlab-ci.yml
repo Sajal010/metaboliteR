@@ -7,8 +7,9 @@ stages:
 
 building:
   stage: build
+  allow_failure: true
   script:
-    - R -e "remotes:install_local(dependencies = TRUE)"
+    - R -e "remotes::install_local(dependencies = TRUE)"
     - R -e 'devtools::check(args = c("--no-examples", "--no-tests"))'
 
 # To have the coverage percentage appear as a gitlab badge follow these
@@ -24,7 +25,7 @@ testing:
     only:
         - master
     script:
-        - Rscript -e "remotes:install_local(dependencies = TRUE)"
+        - Rscript -e "remotes::install_local(dependencies = TRUE)"
         - Rscript -e 'install.packages("DT")'
         - Rscript -e 'covr::gitlab(quiet = FALSE)'
     artifacts:
@@ -40,7 +41,7 @@ pages:
     dependencies:
         - testing
     script:
-        - Rscript -e "remotes:install_local(dependencies = TRUE)"
+        - Rscript -e "remotes::install_local(dependencies = TRUE)"
         - Rscript -e 'install.packages("pkgdown")'
         - Rscript -e 'file.create("pkgdown.yml")'
         - cp pkgdown.yml public
