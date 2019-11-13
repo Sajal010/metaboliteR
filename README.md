@@ -2,7 +2,7 @@
 [![pipeline status](https://gitlab.com/metaboliter/metaboliter/badges/master/pipeline.svg)](https://gitlab.com/metaboliter/metaboliter/pipelines)
 [![coverage report](https://gitlab.com/metaboliter/metaboliter/badges/master/coverage.svg)](https://metaboliter.gitlab.io/metaboliter/coverage)
 
-<img src="inst/shinyApp/www/logo.png" height="120" width="100 style="float: right;"/>
+<img src="/inst/shinyApp/www/logo.png" height="120" width="100" style="float: right;"/>
 
 ### R packages of Probabilistic Principal Component Analysis (PPCA) for metabolomic data
 
