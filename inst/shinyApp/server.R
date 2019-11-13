@@ -8,14 +8,16 @@ shinyServer(function(input, output, session) {
     original_data <- reactive({
         file1 <- input$main_file
         if(is.null(file1)){return(default_data)}
-        read.table(file=file1$datapath, sep=input$sep, header = input$header, check.names = F)
-
+        ori_data <- read.table(file=file1$datapath, sep=input$sep, header = input$header, check.names = F)
+        updateSliderInput(session, "cov_slider", max = ceiling(ncol(ori_data)/10))
+        ori_data
     })
 
     main_data <- reactive({ # Read data
         main_columns <- 1:ncol(original_data())
-        main_columns <- main_columns[!main_columns %in% input$cov_slider[1]:input$cov_slider[2]]
-        main_columns <- main_columns[main_columns!=input$label_slider]
+        main_columns <- main_columns[!main_columns %in% input$cov_slider[1]:input$cov_slider[2]] # remove covariates
+        main_columns <- main_columns[main_columns!=input$label_slider] # remove label
+        main_columns <- main_columns[!main_columns %in% as.numeric(unlist(strsplit(input$ignore_column, ",")))] # remove ignore
         apply(original_data()[, main_columns], 2,function (y) scale_data(y,input$scale))
         #original_data()[, main_columns]
     })
@@ -121,6 +123,7 @@ shinyServer(function(input, output, session) {
     cov_column_check <- reactive(input$cov_slider[2])
     observe(
         if(cov_column_check() == 0) {
+            updateCheckboxInput(session, "covariates_check", value = FALSE)
             disable('covariates_check')
         }
         else {
@@ -128,6 +131,15 @@ shinyServer(function(input, output, session) {
         }
     )
 
+    # Return Parameter Button
+    observeEvent(input$return_param,
+                 isolate({
+                     updateTabsetPanel(session, "analytics_plot_tabs",
+                                       selected = "PPCA_description")
+                 })
+    )
+
+    # Submit Parameter Button
     observeEvent(input$submit_para_btn,
                  isolate({
 
