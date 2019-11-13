@@ -11,7 +11,7 @@ Description: More about what it does (maybe more than one line) TODO!!
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-Depends: R (>= 3.50)
+Depends: R (>= 3.5.0)
 Imports: 
     ellipse,
     fastDummies,
