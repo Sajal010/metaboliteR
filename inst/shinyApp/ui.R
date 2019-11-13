@@ -19,19 +19,19 @@ shinyUI(ui = tagList(
     # Home --------------------------------------------------------------------
     tabPanel("Home",
              column(12, align="center",
-                    h2(strong("Welcome to the PPCA Shiny App for Metabolomic Data")),
-                    h3("This application enables you to perform different PPCA methods using your own metabolomic data."),
+                    h2(strong("Welcome to the Shiny App for Metabolomic Data")),
                     br(),
                     br(),
-                    br() # Empty line
-             ),
-             column(12, align="center",
-                    h4(strong("Basic Procedures:")),
-                    h4("1) Enter your data in the 'Data' tab at the top."),
-                    h4("2) Set your PPCA methods & parameters in the 'Analytics' tab."),
-                    h4("3) Submit the parameters and analyze the results."),
+                    br(), # Empty line
+             #),
+             #column(12, align="center",
+                    #h4(strong("Basic Procedures:")),
+                    #h4("1) Enter your data in the 'Data' tab at the top."),
+                    #h4("2) Set your PPCA methods & parameters in the 'Analytics' tab."),
+                    #h4("3) Submit the parameters and analyze the results."),
                     br(),
-                    h4(strong("Note: For more help on usage, please look in the 'Guide' tab."))
+                    tags$img(src = "Homepage.jpg",height=600,width=500),
+                    h4(strong("Note: For more help on usage, please look in the 'Guide'tab and 'Vignette' for package."))
              )
     ),
 
