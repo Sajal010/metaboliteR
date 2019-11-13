@@ -114,10 +114,10 @@ MPPCA_one_q_one_g <- function(data, q, g, max_it = 1000,eps = 0.1, initial.guess
       tau = compute_tau(data_scaled,mu_g_new, pi_new, Sig, w_g)
 
       #2. Compute E(uig)
-      e_uig = e_uig(w_g, mu_g_new, Sig, data_scaled)
+      e_uig_new = e_uig(w_g, mu_g_new, Sig, data_scaled)
 
       #Compute E[uit uitT]
-      E_uu = E_uig_uig(w_g, Sig, e_uig,n)
+      E_uu = E_uig_uig(w_g, Sig, e_uig_new,n)
 
       ##    Mstep 2
 
@@ -144,7 +144,24 @@ MPPCA_one_q_one_g <- function(data, q, g, max_it = 1000,eps = 0.1, initial.guess
 
     bic <- bic_value(ll, df, n)  #Check if this is supposed to be the observed loglik
 
+    score <- c()
+    for(group_n in 1:g){
+      temp <- c()
+      for(obs_n in 1:n) {
+        temp <- cbind(temp, e_uig_new[[obs_n]][,group_n])
+      }
+      rownames(temp) <- c(paste0("PC", 1:q)) # Rename row names
+      colnames(temp) <- rownames(data) # Rename col names
+      score[[group_n]] <- temp
+    }
+    names(score) <- c(paste0("Group", 1:g)) # Rename row names
+
+    groupings <- data.frame(matrix(max.col(tau), nrow=n))
+    colnames(groupings) <- "Group"
+
     output <- list(sigma2 =Sig_new,
+                   score = score,
+                   groupings = groupings,
                    loadings = w_g_new,
                    pi = pi_new,
                    mu = mu_g_new,
