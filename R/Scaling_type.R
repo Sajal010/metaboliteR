@@ -1,5 +1,3 @@
-# Scaling types -------------------------------------------------------------
-
 st_dev<-function(x){
   return(sqrt(sum((x-mean(x))^2/(length(x)-1))))
 }
@@ -24,6 +22,16 @@ vastscale<-function(x){
   return(((x-mean(x))/st_dev(x))*(mean(x)/st_dev(x)))
 }
 
+
+#' Scales the data
+#'
+#' @param x
+#' @param scale_type
+#'
+#' @return
+#' @export
+#'
+#' @examples
 scale_data<-function(x,scale_type="centering"){
 
   if(scale_type=="centering")

@@ -15,8 +15,6 @@
 #'
 #' @examples
 #' PPCA(urine_data, q_max=2)
-
-
 PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_it = 1000, B, conf_level=0.95, choose_q = TRUE){
 
   p <- ncol(data) # total number of spectral bins
