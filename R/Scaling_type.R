@@ -25,8 +25,8 @@ vastscale<-function(x){
 
 #' Scales the data
 #'
-#' @param x
-#' @param scale_type
+#' @param x data
+#' @param scale_type Type of scaling.
 #'
 #' @return
 #' @export
