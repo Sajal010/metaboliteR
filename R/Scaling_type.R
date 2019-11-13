@@ -2,10 +2,6 @@ st_dev<-function(x){
   return(sqrt(sum((x-mean(x))^2/(length(x)-1))))
 }
 
-centering<-function(x){
-  return(x-mean(x))
-}
-
 autoscale<-function(x){
   return((x-mean(x))/st_dev(x))
 }
@@ -31,11 +27,10 @@ vastscale<-function(x){
 #' @return
 #' @export
 #'
-#' @examples
-scale_data<-function(x,scale_type="centering"){
+scale_data <- function(x, scale_type="none"){
 
-  if(scale_type=="centering")
-    centering(x)
+  if(scale_type=="none")
+    x
 
   else if(scale_type=="autoscale")
     autoscale(x)
