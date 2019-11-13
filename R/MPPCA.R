@@ -2,7 +2,7 @@
 #'
 #' Fits Mixtures of Probabilistic Principal Components model to data.
 #'
-#' @importFrom mclust dmvnorm mclustBIC summary.mclustBIC summaryMclustBIC
+#' @importFrom mclust mclustBIC summary.mclustBIC summaryMclustBIC
 #' @importFrom ggplot2 ggplot
 #' @importFrom magrittr %>%
 #' @importFrom future plan multisession

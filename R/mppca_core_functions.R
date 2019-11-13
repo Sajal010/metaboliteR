@@ -1,10 +1,11 @@
 #' @importFrom stats cov rnorm cmdscale dist
-#' @importFrom mclust dmvnorm mclustBIC summary.mclustBIC summaryMclustBIC
+#' @importFrom mclust mclustBIC summary.mclustBIC summaryMclustBIC
 #' @importFrom stats prcomp qnorm sd glm gaussian
 #' @importFrom magrittr %>%
 #' @importFrom future plan multisession
 #' @importFrom future.apply future_lapply
 #' @importFrom furrr future_map
+#' @importFrom mvtnorm dmvnorm
 
 # MPPCA Method -------------------------------------------------------------
 

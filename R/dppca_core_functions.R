@@ -1,8 +1,8 @@
 # DPPCA Method -------------------------------------------------------------
 
-#' @importFrom stats sd rnorm dnorm
+#' @importFrom stats sd rnorm dnorm runif
 #' @importFrom msm rtnorm
-#' @importFrom mvtnorm dmvnorm rmvnorm
+#' @importFrom mvtnorm rmvnorm dmvnorm
 #' @importFrom LearnBayes rigamma
 
 

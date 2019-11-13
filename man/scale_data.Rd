@@ -7,7 +7,9 @@
 scale_data(x, scale_type = "centering")
 }
 \arguments{
-\item{scale_type}{}
+\item{x}{data}
+
+\item{scale_type}{Type of scaling.}
 }
 \description{
 Scales the data
