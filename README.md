@@ -9,7 +9,7 @@
 If you didn't install this from CRAN, make sure to install dependencies in your computer for the package to work.
 
 Run the following code: 
-`remotes::install_deps(dependencies = TRUE)`
+`remotes::install_local(dependencies = TRUE)`
 
 #### Websites
 
