@@ -1,4 +1,4 @@
-#' Title
+#' Summary of Significant Spectral bins
 #'
 #' @param object a
 #' @param ... a

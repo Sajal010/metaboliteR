@@ -187,6 +187,7 @@ DPPCA = function(q,chain_output, prior_params, burn_in, thin, data_time){
 
   }
 
+  persistance_params = list();
   persistance_params[["phi_chain"]]<-phi_chain
   persistance_params[["Phi_chain"]]<-Phi_chain
   class(persistance_params) <- "DPPCA_persistance"

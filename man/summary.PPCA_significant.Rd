@@ -2,7 +2,7 @@
 % Please edit documentation in R/summary.PPCA_significant.R
 \name{summary.PPCA_significant}
 \alias{summary.PPCA_significant}
-\title{Title}
+\title{Summary of Significant Spectral bins}
 \usage{
 \method{summary}{PPCA_significant}(object, ...)
 }
@@ -15,5 +15,5 @@
 a
 }
 \description{
-Title
+Summary of Significant Spectral bins
 }
