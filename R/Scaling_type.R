@@ -26,11 +26,8 @@ vastscale<-function(x){
 #'
 #' @export
 #'
-<<<<<<< HEAD
-scale_data<-function(x,scale_type="centering"){
-=======
+
 scale_data <- function(x, scale_type="none"){
->>>>>>> 7a23cb66d99d528c2ee7996b2c903d16c739401b
 
   if(scale_type=="none")
     x
