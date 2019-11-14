@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>MathJax example</title>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+  </script>
+</head>
+
+<body>
+
+<h3 style="text-align: center;">&nbsp;<strong>Probabilistic Principal Component Analysis (PPCA)</strong></h3>
+<div>
+<h4><strong>Usage Guide:</strong></h4>
+<p><span style="color: #ff6600;">In order to use PPCA on your data, you need to:</span></p>
+<ol>
+<li><span style="color: #ff6600;">Specify the model parameters in the sidebar on the left</span></li>
+<li><span style="color: #ff6600;">Click the 'SUBMIT PARAMETERS' button for the model to run.</span></li>
+<li><span style="color: #ff6600;">Once the model finishes running, plots will appear under the different plot tabs beside the 'Description' tab.</span></li>
+</ol>
+<p>There are a few parameters which can be tune according to interest:</p>
+<ol>
+<li>Range of Principal Components (e.g: 1 to 4) - This will run 4 PPCA/PPCCA models with 1, 2, 3, and 4 PC scores in the model.</li>
+<li>Number of Bootstrap - This quantifies the uncertainty level of the model parameters using the Bootstrap method. Higher number will increase the accuracy of the given uncertainty but at the cost of higher computational running time. The minimum bootstrap run is according to the number of rows in the data</li>
+<li><span style="color: #0000ff;">Include Covariates</span> - This will run the <span style="color: #0000ff;">PPC<strong>C</strong>A model</span> which will account for the given covariates data. This is disabled when there is no covariates data given in the 'Data' tab.</li>
+<li>Output Optimize Model - This will decide which PPCA/PPCCA model will be shown in the output. Optimal will be chosen based on statistical elbow of BIC. Maximum will just choose the PPCA/PPCCA model with highest number of principal components.</li>
+<li>Convergence Criterion - The value where it decides that the model has converged. Smaller number will have longer computational time but better accuracy.</li>
+<li>Maximum Number of Iteration - The maximum number of iterations the model runs the EM algorithm before it is terminated regardless of the results.</li>
+</ol>
+</div>
+
+</body>
+</html>

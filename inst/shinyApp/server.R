@@ -8,14 +8,18 @@ shinyServer(function(input, output, session) {
     original_data <- reactive({
         file1 <- input$main_file
         if(is.null(file1)){return(default_data)}
-        read.table(file=file1$datapath, sep=input$sep, header = input$header, check.names = F)
-
+        ori_data <- read.table(file=file1$datapath, sep=input$sep, header = input$header, check.names = F)
+        updateSliderInput(session, "cov_slider", max = ceiling(ncol(ori_data)/10))
+        ori_data_rows <- nrow(ori_data)
+        updateSliderInput(session, "bootstrap_n_slider", min = ori_data_rows, value = ori_data_rows)
+        ori_data
     })
 
     main_data <- reactive({ # Read data
         main_columns <- 1:ncol(original_data())
-        main_columns <- main_columns[!main_columns %in% input$cov_slider[1]:input$cov_slider[2]]
-        main_columns <- main_columns[main_columns!=input$label_slider]
+        main_columns <- main_columns[!main_columns %in% input$cov_slider[1]:input$cov_slider[2]] # remove covariates
+        main_columns <- main_columns[main_columns!=input$label_slider] # remove label
+        main_columns <- main_columns[!main_columns %in% as.numeric(unlist(strsplit(input$ignore_column, ",")))] # remove ignore
         apply(original_data()[, main_columns], 2,function (y) scale_data(y,input$scale))
         #original_data()[, main_columns]
     })
@@ -121,6 +125,7 @@ shinyServer(function(input, output, session) {
     cov_column_check <- reactive(input$cov_slider[2])
     observe(
         if(cov_column_check() == 0) {
+            updateCheckboxInput(session, "covariates_check", value = FALSE)
             disable('covariates_check')
         }
         else {
@@ -128,6 +133,22 @@ shinyServer(function(input, output, session) {
         }
     )
 
+    # Return Parameter Button (PPCA tab)
+    observeEvent(input$return_param,
+                 isolate({
+                     updateTabsetPanel(session, "analytics_plot_tabs",
+                                       selected = "PPCA_description")
+                 })
+    )
+    # Return Parameter Button (MPPCA tab)
+    observeEvent(input$return_mix_param,
+                 isolate({
+                     updateTabsetPanel(session, "analytics_mix_plot_tabs",
+                                       selected = "MPPCA_description")
+                 })
+    )
+
+    # Submit PPCA Parameter Button
     observeEvent(input$submit_para_btn,
                  isolate({
 
@@ -244,8 +265,80 @@ shinyServer(function(input, output, session) {
                      }
 
 
-                 }))
+                 })
+    )
 
+    # Submit MPPCA Parameter Button
+    observeEvent(input$submit_mix_para_btn,
+                 isolate({
+
+                     showNotification("Running MPPCA...", duration = NULL, id = "mppca_progress",
+                                      closeButton = FALSE, type = "message")
+
+                     MPPCA_object <- MPPCA(main_data(),
+                                          q_min = input$PC_mix_slider[1], q_max = input$PC_mix_slider[2],
+                                          g_min = input$group_mix_slider[1], g_max = input$group_mix_slider[2],
+                                          B=input$bootstrap_mix_n_slider, eps = input$epsilon_mix)
+
+
+
+                     output$MPPCA_contin_table <- renderPrint({
+                         table(unlist(MPPCA_object$groupings), unlist(labels_data()), dnn = c("Predicted","Actual"))
+                     })
+
+                     output$MPPCA_plot_BIC <- renderPlot({
+                         plot(MPPCA_object$bic_results)
+                     })
+
+
+
+
+                     PC_mix_val <- input$PC_mix_slider
+                     if(PC_mix_val[1]==PC_mix_val[2]) { # Same PC
+                         PC_mix_max_slider <- PC_mix_val[2]
+                         output$optimal_mix_q <- renderText("")
+                     }
+                     else{ # Different PC
+                         output$optimal_mix_q <- renderText(paste("Optimal: Q =", MPPCA_object$optimal_q))
+                         # if(input$choose_q == TRUE) {
+                             PC_mix_max_slider <- MPPCA_object$optimal_q
+                         # }
+                         # else {
+                         #     PC_mix_max_slider <- PC_mix_val[2]
+                         # }
+                     }
+
+                     group_mix_val <- input$group_mix_slider
+                     if(group_mix_val[1]==group_mix_val[2]) { # Same PC
+                         group_mix_max_slider <- group_mix_val[2]
+                         output$optimal_mix_g <- renderText("")
+                     }
+                     else{ # Different PC
+                         output$optimal_mix_g <- renderText(paste("Group =", MPPCA_object$optimal_g))
+                         # if(input$choose_q == TRUE) {
+                             group_mix_max_slider <- MPPCA_object$optimal_g
+                         # }
+                         # else {
+                         #     group_mix_max_slider <- group_mix_val[2]
+                         # }
+                     }
+
+                     updateSliderInput(session, "main_mix_plot_PC", value = PC_mix_val[1],
+                                       min = PC_mix_val[1], max = PC_mix_max_slider)
+
+
+                     on.exit(removeNotification("mppca_progress"), add = TRUE)
+
+                     # Switches to Main plot if User is in Description when model has finished running.
+                     if(input$analytics_mix_plot_tabs == 'MPPCA_description') {
+                         updateTabsetPanel(session, "analytics_mix_plot_tabs",
+                                           selected = "main_MPPCA_plot"
+                         )
+                     }
+
+
+                 })
+    )
 
     # Guides ------------------------------------------------------------------
 

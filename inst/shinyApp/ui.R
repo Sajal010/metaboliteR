@@ -2,6 +2,7 @@ library(shiny)
 library(shinyBS)
 library(shinythemes)
 library(shinyjs)
+
 shinyUI(ui = tagList(
   tags$head(
     tags$style(HTML("
@@ -9,29 +10,19 @@ shinyUI(ui = tagList(
         color: red;
       }
     "))),
-
+  useShinyjs(),
 
   navbarPage(
     theme = shinytheme("lumen"),  # <--- To use a theme, uncomment this
-    useShinyjs(),
     strong("Metabolomic Analytics"), # Main title name
 
     # Home --------------------------------------------------------------------
     tabPanel("Home",
              column(12, align="center",
-                    h2(strong("Welcome to the PPCA Shiny App for Metabolomic Data")),
-                    h3("This application enables you to perform different PPCA methods using your own metabolomic data."),
-                    br(),
-                    br(),
-                    br() # Empty line
-             ),
-             column(12, align="center",
-                    h4(strong("Basic Procedures:")),
-                    h4("1) Enter your data in the 'Data' tab at the top."),
-                    h4("2) Set your PPCA methods & parameters in the 'Analytics' tab."),
-                    h4("3) Submit the parameters and analyze the results."),
-                    br(),
-                    h4(strong("Note: For more help on usage, please look in the 'Guide' tab."))
+                    # img(src='logo.png', align = "right", height=120, width=100),
+                    h2(strong("Welcome to the Shiny App for Metabolomic Data")),
+                    tags$img(src = "Homepage.jpg",height=627,width=400),
+                    h4(strong("Note: For more help on usage, please look into the 'Guide' tab and 'Vignette' for package."))
              )
     ),
 
@@ -49,67 +40,24 @@ shinyUI(ui = tagList(
                          content="Please make sure: rows are samples/observations, columns are spectral bins",
                          trigger = "hover"),
 
-               tags$hr(),
-               h4(helpText("Select the read.table parameters below")),
-               checkboxInput(inputId = 'header', label = 'Header', value = TRUE),
-               # checkboxInput(inputId = "stringAsFactors", "stringAsFactors", FALSE),
-               radioButtons(inputId = 'sep', label = 'Separator', choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
+               # tags$hr(),
+               h4(helpText("Is there a header in the data?")),
+               checkboxInput(inputId = 'header', label = 'Tick for Yes', value = TRUE),
+
+               radioButtons(inputId = 'sep', label = h4(helpText("How is the data separated?")),
+                            inline = TRUE, choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
 
                sliderInput("cov_slider", h4("Covariates Columns:"), 0, 10, c(0,0)),
+               helpText("When covariates are selected, they will appear in the 'Covariates Data' tab"),
                sliderInput("label_slider", h4("Group Labels Columns:"), 0, 10, 0),
+               helpText("When group labels are selected, they will appear in the 'Group Labels' tab"),
+               textInput("ignore_column", h4("Columns Ignored:"), "", placeholder="Columns that are to be ignored. (e.g: 2,3,5)"),
 
+               h4(helpText("Type of Scaling?")),
+               radioButtons(inputId = 'scale', label = 'Scale Type',
+                            choices = c(None='none', Autoscale='autoscale', Paretoscale='paretoscale', Rangescale='rangescale', Vastscale='vastscale'),
+                            selected = 'none'),
                tags$hr(),
-               h4(helpText("Select the scaling parameters below")),
-               radioButtons(inputId = 'scale', label = 'Scale Type', choices = c(Centering='centering',Autoscale='autoscale',Paretoscale='paretoscale',Rangescale='rangescale', Vastscale='vastscale'), selected = 'centering')
-
-
-               # conditionalPanel(condition="input.data_tabs=='main'",
-               #                  fileInput("main_file", h4("File input:", bsButton("main_data_tooltip", label = "",
-               #                                                                    icon = icon("question"), size = "extra-small")),
-               #                            multiple = F, accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"),
-               #                            placeholder = "Enter Metabolomic Data Here"),
-               #                  bsPopover("main_data_tooltip", title="",
-               #                            content="Please make sure: rows are samples/observations, columns are spectral bins",
-               #                            trigger = "hover"),
-               #
-               #                  tags$hr(),
-               #                  h4(helpText("Select the read.table parameters below")),
-               #                  checkboxInput(inputId = 'header', label = 'Header', value = TRUE),
-               #                  # checkboxInput(inputId = "stringAsFactors", "stringAsFactors", FALSE),
-               #                  radioButtons(inputId = 'sep', label = 'Separator', choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
-               #                  # sliderInput("main_slider", h4("Number of rows shown:"), 1, 50, 10)
-               #
-               # ),
-               #
-               # conditionalPanel(condition="input.data_tabs=='covariates'",
-               #                  fileInput("covariates_file", h4("File input:", bsButton("covariates_data_tooltip", label = "",
-               #                                                                          icon = icon("question"), size = "extra-small")),
-               #                            multiple = F, accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"),
-               #                            placeholder = "Enter Covariates Data Here"),
-               #                  bsPopover("covariates_data_tooltip", title="",
-               #                            content="Please make sure: rows are samples/observations, columns are covariates",
-               #                            trigger = "hover"),
-               #
-               #                  tags$hr(),
-               #                  h5(helpText("Select the read.table parameters below")),
-               #                  checkboxInput(inputId = 'cov_header', label = 'Header', value = TRUE),
-               #                  # checkboxInput(inputId = "stringAsFactors", "stringAsFactors", FALSE),
-               #                  radioButtons(inputId = 'cov_sep', label = 'Separator', choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
-               #                  # sliderInput("cov_slider", h4("Number of rows shown:"), 1, 50, 10)
-               # ),
-               #
-               # conditionalPanel(condition="input.data_tabs=='labels'",
-               #                  fileInput("labels_file", h4("File input:"), multiple = F,
-               #                            accept = c("text/csv", "text/comma-separated-values, text/plain",
-               #                                       ".csv"), placeholder = "Enter Labels Data Here"),
-               #
-               #                  tags$hr(),
-               #                  h5(helpText("Select the read.table parameters below")),
-               #                  checkboxInput(inputId = 'lab_header', label = 'Header', value = TRUE),
-               #                  # checkboxInput(inputId = "stringAsFactors", "stringAsFactors", FALSE),
-               #                  radioButtons(inputId = 'lab_sep', label = 'Separator', choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
-               #                  # sliderInput("lab_slider", h4("Number of rows shown:"), 1, 50, 10)
-               # )
 
              ),
              mainPanel(
@@ -146,25 +94,23 @@ shinyUI(ui = tagList(
 
                           conditionalPanel(condition="input.analytics_plot_tabs=='PPCA_description'",
                                            h3(helpText('Model Parameters:')),
-                                           div(style="display:inline-block",
-                                               numericInput("epsilon", label = "Covergence Criterion:", value=0.01, min=1e-5, max=1e2),
-                                           ),
-                                           div(style="display:inline-block",
-                                               numericInput("max_iter", label = "Max Number of Iteration:", value=1e3, min=1, max=1e6),
-                                           ),
-
-                                           h4("Include Covariates?"),
-
-                                           disabled(checkboxInput(inputId = 'covariates_check', label = span('Tick for Yes', title = "Please make sure covariates data are selected in Data tabs to enable this selection"), value = FALSE)),
-
-
-                                           radioButtons("choose_q", label = h4("Output Optimize Model?"), choices = c(Use_Optimal_PC=TRUE, Use_Maximum_PC=FALSE)),
 
                                            sliderInput("PC_slider", h4("Range of Principal Components:"),
                                                        min = 1, max = 10, value = c(1, 4)),
                                            sliderInput("bootstrap_n_slider", h4("Numbers of Bootstrap:"), 2, 100, 5),
                                            bsTooltip("bootstrap_n_slider", title="Higher Bootstrap, Better Uncertainty but Longer Wait Time", trigger = "hover"),
 
+                                           h4("Include Covariates?"),
+                                           disabled(checkboxInput(inputId = 'covariates_check', label = span('Tick for Yes', title = "Please make sure covariates data are selected in Data tabs to enable this selection"), value = FALSE)),
+
+                                           radioButtons("choose_q", label = h4("Output Optimize Model?"), choices = c(Use_Optimal_PC=TRUE, Use_Maximum_PC=FALSE)),
+
+                                           div(style="display:inline-block",
+                                               numericInput("epsilon", label = "Covergence Criterion:", value=0.01, min=1e-5, max=1e2),
+                                           ),
+                                           div(style="display:inline-block",
+                                               numericInput("max_iter", label = "Max Number of Iteration:", value=1e3, min=1, max=1e6),
+                                           ),
 
                                            tags$h6("Click button to run the model using desired parameters:"),
                                            div(style="display:inline-block",
@@ -179,6 +125,8 @@ shinyUI(ui = tagList(
 
 
                           conditionalPanel(condition="input.analytics_plot_tabs!='PPCA_description'",
+                                           tags$br(),
+                                           actionButton("return_param", "Return to Parameters", class = "btn-default"),
                                            h3(helpText('Graph Controls:'))
                           ),
 
@@ -216,7 +164,57 @@ shinyUI(ui = tagList(
                  tabPanel(tags$div("MPPCA",
                                    title="Mixed PPCA that deals with multiple groups"),
                           value = "MPPCA_tab",
-                          "Placeholder for Mix PPCA"),
+                          bsTooltip("PPCA_tooltip", title="Simple PPCA", trigger = "hover"),
+
+                          conditionalPanel(condition="input.analytics_mix_plot_tabs=='MPPCA_description'",
+                                           h3(helpText('Model Parameters:')),
+
+                                           sliderInput("group_mix_slider", h4("Range of Groups Estimated:"),
+                                                       min = 1, max = 10, value = c(1,4)),
+                                           sliderInput("PC_mix_slider", h4("Range of Principal Components:"),
+                                                       min = 1, max = 10, value = c(1, 4)),
+                                           sliderInput("bootstrap_mix_n_slider", h4("Numbers of Bootstrap:"), 2, 100, 5),
+                                           bsTooltip("bootstrap_mix_n_slider", title="Higher Bootstrap, Better Uncertainty but Longer Wait Time", trigger = "hover"),
+
+                                           # h4("Include Covariates?"),
+                                           # disabled(checkboxInput(inputId = 'covariates_mix_check', label = span('Tick for Yes', title = "Please make sure covariates data are selected in Data tabs to enable this selection"), value = FALSE)),
+
+                                           # radioButtons("choose_q", label = h4("Output Optimize Model?"), choices = c(Use_Optimal_PC=TRUE, Use_Maximum_PC=FALSE)),
+
+                                           div(style="display:inline-block",
+                                               numericInput("epsilon_mix", label = "Covergence Criterion:", value=0.01, min=1e-5, max=1e2),
+                                           ),
+                                           div(style="display:inline-block",
+                                               numericInput("max_iter_mix", label = "Max Number of Iteration:", value=1e3, min=1, max=1e6),
+                                           ),
+
+                                           tags$h6("Click button to run the model using desired parameters:"),
+                                           div(style="display:inline-block",
+                                               actionButton("submit_mix_para_btn", "Submit Parameters", class = "btn-primary"),
+                                           ),
+                                           div(style="display:inline-block",
+                                               strong(textOutput("optimal_mix_q")),
+                                           ),
+                                           div(style="display:inline-block",
+                                               strong(textOutput("optimal_mix_g")),
+                                           ),
+
+                                           tags$hr(),
+                          ),
+
+
+                          conditionalPanel(condition="input.analytics_mix_plot_tabs!='MPPCA_description'",
+                                           tags$br(),
+                                           actionButton("return_mix_param", "Return to Parameters", class = "btn-default"),
+                                           h3(helpText('Graph Controls:'))
+                          ),
+
+                          # Main plot
+                          conditionalPanel(condition="input.analytics_mix_plot_tabs=='main_MPPCA_plot'",
+                                           sliderInput("main_mix_plot_PC", h4("Principal Component for Main Plot:"), min=1, max=10, value=1, step=1, ticks=F),
+                          ),
+
+                 ),
 
                  # DPPCA plot controls
                  tabPanel(tags$div("DPPCA", title="Dynamic PPCA"),
@@ -231,21 +229,22 @@ shinyUI(ui = tagList(
                               mainPanel(
                                 tabsetPanel(
                                   tabPanel("Description", value = "PPCA_description",
-                                           column(12, align="center",
-                                                  h2(strong("PPCA is bla bla bla")),
-                                                  h3("This application enables you to perform different PPCA methods using your own metabolomic data."),
-                                                  br(),
-                                                  br(),
-                                                  br() # Empty line
-                                           ),
-                                           column(12, align="center",
-                                                  h4(strong("Basic Procedures:")),
-                                                  h4("1) Enter your data in the 'Data' tab at the top."),
-                                                  h4("2) Set your PPCA methods & parameters in the 'Analytics' tab."),
-                                                  h4("3) Submit the parameters and analyze the results."),
-                                                  br(),
-                                                  h4(strong("Note: For more help on usage, please look in the 'Guide' tab."))
+                                           br(),
+                                           bsCollapse(id = "PPCA_desc", open = "PPCA/PPCCA Usage Guide",
+                                                      bsCollapsePanel("PPCA/PPCCA Usage Guide",
+
+                                                                      includeHTML("PPCA_desc_ug.html"),
+                                                                      style = "primary"),
+                                                      bsCollapsePanel("PPCA/PPCCA Conceptual Explanation",
+
+                                                                      includeHTML("PPCA_desc_ce.html"),
+                                                                      style = "info"),
+                                                      bsCollapsePanel("PPCA/PPCCA Technical Details",
+
+                                                                      includeHTML("PPCA_desc_td.html"),
+                                                                      style = "info")
                                            )
+
                                   ),
                                   tabPanel("Main Plot", value = "main_PPCA_plot",
                                            plotOutput("PPCA_plot"),
@@ -286,10 +285,24 @@ shinyUI(ui = tagList(
                                                   h2(strong("MPPCA is bla bla bla")),
                                            ),
                                   ),
-                                  tabPanel("Main Plot"),
-                                  tabPanel("Score Plot"),
-                                  tabPanel("Loading Plot")
 
+                                  tabPanel("Main Plot", value = "main_MPPCA_plot"),
+                                  tabPanel("Score Plot"),
+                                  tabPanel("Loading Plot"),
+                                  tabPanel("Contingency Table", value = "contin_MPPCA_table",
+                                           "If Group Labels are not given, error will appear as:",
+                                           tags$br(),
+                                           "Error: all arguments must have the same length",
+                                           tags$br(),
+                                           "Fix it by selecting Group Labels Column in 'Data' tab.",
+                                           verbatimTextOutput("MPPCA_contin_table")
+                                  ),
+
+                                  tabPanel("BIC Plot", value = "BIC_MPPCA_plot",
+                                           plotOutput("MPPCA_plot_BIC")
+                                  ),
+
+                                  id = "analytics_mix_plot_tabs"
 
                                 )
                               )
