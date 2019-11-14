@@ -2,6 +2,9 @@
 #'
 #' DPCCA is a model for analysing longitudinal metabolomic data.
 #'
+#' @importFrom stats var
+#' @importFrom utils tail
+#'
 #' @param q Number of components.
 #' @param chain_output Desired size of ouput chain.
 #' @param prior_params Named list containing prior parameter specification. \cr The parameters to be supplied are: \cr
@@ -22,7 +25,8 @@
 
 
 DPPCA = function(q,chain_output, prior_params, burn_in, thin, data_time){
-
+  M = length(data_time)
+  n = length(data_time[[1]])
   #chain size: desired chain size
 
   chain_size = chain_output*(thin+1) + burn_in
