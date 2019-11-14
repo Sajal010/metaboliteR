@@ -28,10 +28,8 @@ vastscale<-function(x){
 #' @param x data
 #' @param scale_type Type of scaling.
 #'
-#' @return
 #' @export
 #'
-#' @examples
 scale_data<-function(x,scale_type="centering"){
 
   if(scale_type=="centering")

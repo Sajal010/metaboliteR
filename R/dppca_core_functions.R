@@ -5,6 +5,26 @@
 #' @importFrom mvtnorm rmvnorm dmvnorm
 #' @importFrom LearnBayes rigamma
 
+#  Data  -------------------------------------------------------------
+
+pareto_scale = function(index,data){
+  data_scaled<- sweep(data[[index]],2,colMeans(data[[index]]),"-")
+  data_scaled <- sweep(data[[index]],2,sqrt(apply(data[[index]],2,sd)),"/")
+  out = list()
+  out[[paste0("M",index)]] <- data_scaled
+  return(out)
+}
+
+ppca_initial_values = function(index, q, data){
+  ppca = PPCA(data[[index]], q_min = q, q_max = q)
+  Sig = ppca$sigma2
+  U = ppca$score$score
+  H =diag( diag(var(t(ppca$score$score)) ))
+  W = ppca$loadings
+  output = list(Sig = Sig,
+                U = U, H=H, W=W)
+  return(output)
+}
 
 #  Gibbs U -------------------------------------------------------------
 gibbs_U = function(data, eta, W, H){
@@ -13,7 +33,10 @@ gibbs_U = function(data, eta, W, H){
   Sig <- exp(eta)
 
   single_U = function(m,W,Sig,H,data){
+
     n = nrow(data[[1]])
+    q = dim(W[[1]])[2]
+
     v.u <- solve((t(W[[m]])%*%W[[m]])/Sig[m] + solve(H[[m]]))
     m.u <- v.u%*%(t(W[[m]])%*%t(data[[m]]))/Sig[m]
     U<- t(rmvnorm(n, rep(0, q), v.u)) + m.u;
@@ -33,6 +56,9 @@ gibbs_W = function(data, eta, omega_inv, U){
   Sig <- exp(eta)
 
   single_W = function(m, omega_inv, U, Sig, data){
+
+    p = ncol(data[[1]]); q = dim(U[[1]])[1]
+
     v.l <- solve(omega_inv[[m]] + (U[[m]]%*%t(U[[m]]))/Sig[m])
     m.l <- (v.l/Sig[m])%*%(U[[m]]%*%data[[m]])
     W<- rmvnorm(p, rep(0,q), v.l) + t(m.l)
@@ -48,7 +74,7 @@ gibbs_W = function(data, eta, omega_inv, U){
 
 MH_eta = function(eta, U, W, v2, phi, nu, data, eta_accept){
 
-  M = length(W);
+  M = length(W); n = nrow(data[[1]]); p = ncol(data[[1]])
 
   single_eta = function(m,eta, U, W, v2, phi, nu, data, eta_accept){
 
@@ -99,9 +125,14 @@ MH_eta = function(eta, U, W, v2, phi, nu, data, eta_accept){
 
 #  M-H lambda -------------------------------------------------------------
 
-MH_lambda = function(lambda,mu,Phi,V,U, accept_lambda){
+MH_lambda = function(lambda,mu,Phi,V,U, accept_lambda,data){
 
-  gen_lambda_j = function(m, j, lambda, mu, Phi, U){
+  M = length(data);
+
+  gen_lambda_j = function(m, j, lambda, mu, Phi, U, data){
+
+    M = length(data); n = nrow(data[[1]])
+
     if(m ==1){
       a = mu[j] + Phi[j]*(lambda[[m]][2] - mu[j])
       b = V[j]
@@ -137,7 +168,8 @@ MH_lambda = function(lambda,mu,Phi,V,U, accept_lambda){
     return(output)
   }
 
-  l = mapply(gen_lambda_j, m = sort(rep(seq(1,M,1),q)), j = rep(seq(1,q,1), M), MoreArgs = list(lambda = lambda, mu =mu, Phi=Phi, U=U), SIMPLIFY = FALSE)
+  q = dim(U[[1]])[1]
+  l = mapply(gen_lambda_j, m = sort(rep(seq(1,M,1),q)), j = rep(seq(1,q,1), M), MoreArgs = list(lambda = lambda, mu =mu, Phi=Phi, U=U,data=data), SIMPLIFY = FALSE)
 
   ls = unlist(lapply(l, "[[", "lambda"))
   accepted = matrix(unlist(lapply(l, "[[", "acception")), nrow = M, ncol = q, byrow = TRUE)
@@ -174,8 +206,8 @@ gibbs_v2 = function(alpha, beta, eta, phi, nu){
 
 #  Gibbs nu -------------------------------------------------------------
 
-gibbs_nu = function(sigma2_nu, phi, eta, v2){
-
+gibbs_nu = function(sigma2_nu, phi, eta, v2, data){
+  M = length(data)
   sig.nu <- 1/(((M-1)*(1 - phi)*(1 - phi) + (1 - phi^2))/v2 + 1/sigma2_nu)
   num <- (1 + phi)*eta[1] + sum(eta[-1] - phi*eta[-M])
   den <- (1 + phi) + (M-1)*(1-phi) + v2/((1 - phi)*sigma2_nu)
@@ -249,7 +281,7 @@ gibbs_mu = function(sigma2_mu, Phi,V,lambda){
 
   }
   q = length(lambda[[1]])
-  mu = sapply(seq(1,q,1),single_nu,sigma2_nu, Phi,V,lambda );
+  mu = sapply(seq(1,q,1),single_nu,sigma2_mu, Phi,V,lambda );
   return(mu)
 
 }
@@ -257,6 +289,8 @@ gibbs_mu = function(sigma2_mu, Phi,V,lambda){
 #  M-H Phi -------------------------------------------------------------
 
 MH_Phi = function(mu_Phi,sigma2_Phi, Phi, V, lambda, mu, accept_Phi){
+
+  M = length(lambda)
 
   single_Phi = function(j, mu_Phi,sigma2_Phi,Phi, V, lambda, mu){
 
