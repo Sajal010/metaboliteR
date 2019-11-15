@@ -44,7 +44,7 @@ plot(ppca$score, labels = UrineSpectra[[2]][,1])
 Barplots of spectral bins with loadings that are significantly different from zero are obtained by plotting the model. The spectral bins are in descending order according to the magnitude of the loadings. The user can control how many spectral bins to be shown and of which principal component, the former using the argument **n** and the former supplying a number to **PC**.
 
 ```{r fig2, fig.height= 3.5, fig.width= 7.5, fig.align = "center"}
-plot(ppca, PC = 1, n = 10)
+plot(ppca$loadings, analysis=TRUE, PC = 1, n = 10)
 ```
 
 Estimates of the model parameters can be assessed in the model output as follows.
@@ -89,7 +89,7 @@ plot(ppcca$score, labels = UrineSpectra[[2]][,1])
 ```
 
 ```{r fig6, fig.height= 3.5, fig.width= 7.5,fig.align = "center"}
-plot(ppcca, PC = 1, n = 10)
+plot(ppcca$loadings, analysis=TRUE, PC = 1, n = 10)
 ```
 
 ## MPPCA: Mixtures of Probabilistic Principal Components Analysis
