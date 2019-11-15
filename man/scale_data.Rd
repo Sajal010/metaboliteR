@@ -9,7 +9,7 @@ scale_data(x, scale_type = "none")
 \arguments{
 \item{x}{data}
 
-\item{scale_type}{Type of scaling.}
+\item{scale_type}{Type of scaling}
 }
 \description{
 Scales the data

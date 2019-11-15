@@ -23,7 +23,7 @@ shinyUI(ui = tagList(
                     # img(src='logo.png', align = "right", height=120, width=100),
                     h2(strong("Welcome to the Shiny App for Analysing Metabolomic Data Using R")),
                     tags$img(src = "Homepage.jpg",height=627,width=400),
-                    h4(strong("Note: For more help on usage, please look in the 'Guide'tab and 'Vignette' for package."))
+                    h4(strong("Note: For more help on usage, please look into the 'Guide' tab and 'Vignette' for package."))
              )
     ),
 
