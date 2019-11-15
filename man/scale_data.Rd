@@ -4,7 +4,7 @@
 \alias{scale_data}
 \title{Scales the data}
 \usage{
-scale_data(x, scale_type = "centering")
+scale_data(x, scale_type = "none")
 }
 \arguments{
 \item{x}{data}
