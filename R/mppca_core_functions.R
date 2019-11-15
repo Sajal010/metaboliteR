@@ -144,7 +144,14 @@ MPPCA_one_q_one_g <- function(data, q, g, max_it = 1000,eps = 0.1, initial.guess
 
     bic <- bic_value(ll, df, n)  #Check if this is supposed to be the observed loglik
 
-    score <- c()
+    # Rename loadings data structure
+    names(w_g_new) <- c(paste0("Group", 1:g)) # Rename list names
+
+    clusters <- data.frame(matrix(max.col(tau), nrow=n))
+    colnames(clusters) <- "Group"
+
+    # Reorganize score data structure (full score)
+    score.new <- c()
     for(group_n in 1:g){
       temp <- c()
       for(obs_n in 1:n) {
@@ -152,16 +159,42 @@ MPPCA_one_q_one_g <- function(data, q, g, max_it = 1000,eps = 0.1, initial.guess
       }
       rownames(temp) <- c(paste0("PC", 1:q)) # Rename row names
       colnames(temp) <- rownames(data) # Rename col names
-      score[[group_n]] <- temp
+      score.new[[group_n]] <- temp
     }
-    names(score) <- c(paste0("Group", 1:g)) # Rename row names
+    names(score.new) <- c(paste0("Group", 1:g)) # Rename list names
 
-    groupings <- data.frame(matrix(max.col(tau), nrow=n))
-    colnames(groupings) <- "Group"
+    score_specific <- c()
+    for(cluster_n in 1:g) {
+      score_specific[[cluster_n]] <- score.new[[cluster_n]][,unlist(clusters, use.names = FALSE)==cluster_n]
+
+      if(q==1) { # Properly name when q = 1 only
+        score_specific[[cluster_n]] <- matrix(score_specific[[cluster_n]], ncol = length(score_specific[[cluster_n]]), dimnames = list("PC1")) # Rename row names
+      }
+    }
+    names(score_specific) <- c(paste0("Group", 1:g)) # Rename list names
+
+    # Posterior score variance
+    if(q==1){
+      score_var <- list()
+    }
+    else{
+      score_var <- c()
+    }
+    for(group_n in 1:g) {
+      score_var[[group_n]] <- Sig_new * solve((t(w_g_new[[group_n]]) %*% w_g_new[[group_n]]) +
+                                                   (Sig_new * diag(q)))
+    }
+
+    names(score_var) <- c(paste0("Group", 1:g)) # Rename row names
+
+    score <- list(score = score_specific, score_var = score_var)
+
+    class(score) <- c("MPPCA_score")
+    class(w_g_new) <- c("MPPCA_loadings")
 
     output <- list(sigma2 =Sig_new,
                    score = score,
-                   groupings = groupings,
+                   clustering = clusters,
                    loadings = w_g_new,
                    pi = pi_new,
                    mu = mu_g_new,

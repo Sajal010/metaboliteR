@@ -11,6 +11,7 @@ shinyUI(ui = tagList(
       }
     "))),
   useShinyjs(),
+  withMathJax(),
 
   navbarPage(
     theme = shinytheme("lumen"),  # <--- To use a theme, uncomment this
@@ -20,7 +21,7 @@ shinyUI(ui = tagList(
     tabPanel("Home",
              column(12, align="center",
                     # img(src='logo.png', align = "right", height=120, width=100),
-                    h2(strong("Welcome to the Shiny App for Metabolomic Data")),
+                    h2(strong("Welcome to the Shiny App for Analysing Metabolomic Data Using R")),
                     tags$img(src = "Homepage.jpg",height=627,width=400),
                     h4(strong("Note: For more help on usage, please look in the 'Guide'tab and 'Vignette' for package."))
              )
@@ -30,7 +31,7 @@ shinyUI(ui = tagList(
 
     # Data --------------------------------------------------------------------
     tabPanel("Data",
-             sidebarPanel(
+             sidebarPanel(width = 3,
 
                fileInput("main_file", h4("File input:", bsButton("main_data_tooltip", label = "",
                                                                  icon = icon("question"), size = "extra-small")),
@@ -51,16 +52,28 @@ shinyUI(ui = tagList(
                helpText("When covariates are selected, they will appear in the 'Covariates Data' tab"),
                sliderInput("label_slider", h4("Group Labels Columns:"), 0, 10, 0),
                helpText("When group labels are selected, they will appear in the 'Group Labels' tab"),
-               textInput("ignore_column", h4("Columns Ignored:"), "", placeholder="Columns that are to be ignored. (e.g: 2,3,5)"),
+               textInput("ignore_column", h4("Columns Ignored from Main Data:"), "", placeholder="Column number/names (e.g: 2,3,5 or 9.98,9.94,9.86)"),
 
-               h4(helpText("Type of Scaling?")),
-               radioButtons(inputId = 'scale', label = 'Scale Type',
-                            choices = c(None='none', Autoscale='autoscale', Paretoscale='paretoscale', Rangescale='rangescale', Vastscale='vastscale'),
+               h4(helpText("Enter Desired Scaling:", bsButton("scale_type_tooltip", label = "",
+                                                              icon = icon("question"), size = "extra-small"))),
+               bsPopover("scale_type_tooltip", title="Types of Scaling",
+                         content="Choosing any scale will pre-process the data by the given formula. Further details on Guide Tab.",
+                         trigger = "hover"),
+
+
+               radioButtons(inputId = 'scale', label = NULL,
+                            choiceNames =  c("None", "Auto Scale \\(\\quad\\) \\(\\frac{x-\\mu}{\\sigma}\\)",
+                                             "Pareto Scale \\(\\space\\) \\(\\frac{x-\\mu}{\\sqrt{\\sigma}}\\)",
+                                             "Range Scale \\(\\space\\) \\(\\frac{x-\\mu}{x_{max} - x_{min}}\\)",
+                                             "Vast Scale \\(\\quad\\) \\(\\frac{x-\\mu}{\\sigma}(\\frac{\\mu}{\\sigma}\\))"),
+                            choiceValues = c('none', 'autoscale', 'paretoscale', 'rangescale', 'vastscale'),
                             selected = 'none'),
+               div(helpText("*μ is the column mean observation while σ is the standard deviation"), style = "font-size:80%"),
+
                tags$hr(),
 
              ),
-             mainPanel(
+             mainPanel(width = 9,
                tabsetPanel(
                  tabPanel(span("Main Data", title="Data from NMR or Mass Spectroscopy (MS)"),
                           value = 'main',
@@ -79,6 +92,7 @@ shinyUI(ui = tagList(
                  ),
                  id = "data_tabs"
                )
+
              )
     ),
 
@@ -86,7 +100,7 @@ shinyUI(ui = tagList(
 
     # Analytics ---------------------------------------------------------------
     tabPanel("Analytics",
-             sidebarPanel(
+             sidebarPanel(width = 3,
                tabsetPanel(
                  # PPCA plot controls
                  tabPanel(div("PPCA",id="PPCA_tooltip"), value = "PPCA_tab",
@@ -100,13 +114,18 @@ shinyUI(ui = tagList(
                                            sliderInput("bootstrap_n_slider", h4("Numbers of Bootstrap:"), 2, 100, 5),
                                            bsTooltip("bootstrap_n_slider", title="Higher Bootstrap, Better Uncertainty but Longer Wait Time", trigger = "hover"),
 
-                                           h4("Include Covariates?"),
+                                           h4("Do you want to include Covariates?"),
                                            disabled(checkboxInput(inputId = 'covariates_check', label = span('Tick for Yes', title = "Please make sure covariates data are selected in Data tabs to enable this selection"), value = FALSE)),
 
-                                           radioButtons("choose_q", label = h4("Output Optimize Model?"), choices = c(Use_Optimal_PC=TRUE, Use_Maximum_PC=FALSE)),
+                                           radioButtons("choose_q", label = h4("Output Optimize Model?"),
+                                                        choiceNames = c("Use Optimal PC", "Use Maximum PC"),
+                                                        choiceValues = c(TRUE, FALSE)),
 
                                            div(style="display:inline-block",
-                                               numericInput("epsilon", label = "Covergence Criterion:", value=0.01, min=1e-5, max=1e2),
+                                               numericInput("epsilon", label = "Covergence Criterion:", value=0.01, min=1e-5, max=1e2, ),
+                                           ),
+                                           div(style="display:inline-block",
+                                               "\\(\\space\\space\\)",
                                            ),
                                            div(style="display:inline-block",
                                                numericInput("max_iter", label = "Max Number of Iteration:", value=1e3, min=1, max=1e6),
@@ -130,15 +149,6 @@ shinyUI(ui = tagList(
                                            h3(helpText('Graph Controls:'))
                           ),
 
-
-                          # Main plot
-                          conditionalPanel(condition="input.analytics_plot_tabs=='main_PPCA_plot'",
-                                           sliderInput("main_plot_PC", h4("Principal Component for Main Plot:"), min=1, max=10, value=1, step=1, ticks=F),
-                                           sliderInput("conf_int", h4("Confidence Interval:"), min=0.8, max=0.9999, value=0.95, ticks=F),
-                                           sliderInput("n_main", h5("Numbers of Significant Bin for Main Plot"), min=1, max=20, value=5, step=1, ticks=F),
-                                           downloadButton("dl_significant_btn1", span("Download", title="Download a Table of All Significant Spectral Bins Names"))
-                          ),
-
                           # Score & Loading
                           conditionalPanel(condition="input.analytics_plot_tabs=='score_PPCA_plot' || input.analytics_plot_tabs=='loading_PPCA_plot'",
                                            sliderInput("x_PC", h4("X-axis Principal Component:"), min=1, max=10, value=4, step=1, ticks=F),
@@ -149,6 +159,15 @@ shinyUI(ui = tagList(
 
 
                                            )
+                          ),
+
+
+                          # Loadings Analysis plot
+                          conditionalPanel(condition="input.analytics_plot_tabs=='loading_analysis_PPCA_plot'",
+                                           sliderInput("main_plot_PC", h4("Principal Component for Plot:"), min=1, max=10, value=1, step=1, ticks=F),
+                                           sliderInput("conf_int", h4("Confidence Interval:"), min=0.8, max=0.9999, value=0.95, ticks=F),
+                                           sliderInput("n_main", h5("Numbers of Significant Bin for Main Plot"), min=1, max=20, value=5, step=1, ticks=F),
+                                           downloadButton("dl_significant_btn1", span("Download", title="Download a Table of All Significant Spectral Bins Names"))
                           ),
 
                           # Significant bins
@@ -185,6 +204,9 @@ shinyUI(ui = tagList(
                                                numericInput("epsilon_mix", label = "Covergence Criterion:", value=0.01, min=1e-5, max=1e2),
                                            ),
                                            div(style="display:inline-block",
+                                               "\\(\\space\\space\\)",
+                                           ),
+                                           div(style="display:inline-block",
                                                numericInput("max_iter_mix", label = "Max Number of Iteration:", value=1e3, min=1, max=1e6),
                                            ),
 
@@ -202,16 +224,33 @@ shinyUI(ui = tagList(
                                            tags$hr(),
                           ),
 
-
+                          # Graph controls
                           conditionalPanel(condition="input.analytics_mix_plot_tabs!='MPPCA_description'",
                                            tags$br(),
                                            actionButton("return_mix_param", "Return to Parameters", class = "btn-default"),
                                            h3(helpText('Graph Controls:'))
                           ),
 
-                          # Main plot
-                          conditionalPanel(condition="input.analytics_mix_plot_tabs=='main_MPPCA_plot'",
-                                           sliderInput("main_mix_plot_PC", h4("Principal Component for Main Plot:"), min=1, max=10, value=1, step=1, ticks=F),
+                          # MPPCA Score
+                          conditionalPanel(condition="input.analytics_mix_plot_tabs=='score_MPPCA_plot'",
+                                           sliderInput("x_mix_PC", h4("X-axis Principal Component:"), min=1, max=10, value=4, step=1, ticks=F),
+                                           sliderInput("y_mix_PC", h4("Y-axis Principal Component:"), min=1, max=10, value=4, step=1, ticks=F),
+                                           sliderInput("post_mix_int", h4("Posterior Interval:"), min=0.8, max=0.9999, value=0.95, ticks=F),
+
+
+
+                          ),
+
+                          # MPPCA Loadings & Loading Analysis plot
+                          conditionalPanel(condition="input.analytics_mix_plot_tabs=='loading_MPPCA_plot' || input.analytics_mix_plot_tabs=='loading_analysis_MPPCA_plot'",
+                                           sliderInput("group_mix", h4("Group Selected:"), min=1, max=10, value=4, step=1),
+
+                                           conditionalPanel(condition="input.analytics_mix_plot_tabs=='loading_analysis_MPPCA_plot'",
+                                                            sliderInput("analysis_mix_plot_PC", h4("Principal Component for Plot:"), min=1, max=10, value=1, step=1, ticks=F),
+                                                            sliderInput("conf_mix_int", h4("Confidence Interval:"), min=0.8, max=0.9999, value=0.95, ticks=F),
+                                                            sliderInput("n_mix_main", h5("Numbers of Significant Bin for Main Plot"), min=1, max=20, value=5, step=1, ticks=F)
+
+                                           )
                           ),
 
                  ),
@@ -221,12 +260,13 @@ shinyUI(ui = tagList(
                           value = "DPPCA_tab",
                           "Placeholder for Dynamic PPCA"),
                  id = "analytics_method_tab"
-               )
+               ),
+
              ),
 
              # PPCA Plots
              conditionalPanel(condition="input.analytics_method_tab=='PPCA_tab'",
-                              mainPanel(
+                              mainPanel(width = 9,
                                 tabsetPanel(
                                   tabPanel("Description", value = "PPCA_description",
                                            br(),
@@ -246,28 +286,28 @@ shinyUI(ui = tagList(
                                            )
 
                                   ),
-                                  tabPanel("Main Plot", value = "main_PPCA_plot",
-                                           plotOutput("PPCA_plot"),
-                                           plotOutput("PPCA_influence_report"),
-                                  ),
                                   tabPanel("Score Plots", value = "score_PPCA_plot",
                                            plotOutput("PPCA_plot_score"),
 
                                   ),
-                                  tabPanel("Loading Plots", value = "loading_PPCA_plot",
+                                  tabPanel("Loadings Plots", value = "loading_PPCA_plot",
                                            plotOutput("PPCA_plot_loadings"),
                                   ),
-
-                                  tabPanel("Significant Bins Plots", value = "sig_bins_PPCA_plot",
-                                           plotOutput("PPCA_plot_significant"),
-                                           verbatimTextOutput("PPCA_summary_significant")
+                                  tabPanel("Loadings Analysis Plot", value = "loading_analysis_PPCA_plot",
+                                           plotOutput("PPCA_plot_loadings_analysis"),
+                                           plotOutput("PPCA_influence_report"),
                                   ),
 
-                                  tabPanel("BIC/PoV Plots", value = "bic_PPCA_plot",
+                                  # tabPanel("Significant Bins Plots", value = "sig_bins_PPCA_plot",
+                                  #          plotOutput("PPCA_plot_significant"),
+                                  #          verbatimTextOutput("PPCA_summary_significant")
+                                  # ),
+
+                                  tabPanel("Model Selection Plot", value = "bic_PPCA_plot",
                                            plotOutput("PPCA_plot_bic"),
                                   ),
 
-                                  tabPanel("Likelihood Covergence Plots", value = "ll_PPCA_plot",
+                                  tabPanel("Algorithm Covergence Plot", value = "ll_PPCA_plot",
                                            plotOutput("PPCA_plot_ll_conv"),
                                   ),
 
@@ -278,7 +318,7 @@ shinyUI(ui = tagList(
 
              # MPCCA plots
              conditionalPanel(condition="input.analytics_method_tab=='MPPCA_tab'",
-                              mainPanel(
+                              mainPanel(width = 9,
                                 tabsetPanel(
                                   tabPanel("Description", value = "MPPCA_description",
                                            column(12, align="center",
@@ -286,17 +326,27 @@ shinyUI(ui = tagList(
                                            ),
                                   ),
 
-                                  tabPanel("Main Plot", value = "main_MPPCA_plot"),
-                                  tabPanel("Score Plot"),
-                                  tabPanel("Loading Plot"),
-                                  tabPanel("Contingency Table", value = "contin_MPPCA_table",
-                                           "If Group Labels are not given, error will appear as:",
-                                           tags$br(),
-                                           "Error: all arguments must have the same length",
-                                           tags$br(),
-                                           "Fix it by selecting Group Labels Column in 'Data' tab.",
-                                           verbatimTextOutput("MPPCA_contin_table")
+
+                                  tabPanel("Score Plot", value = "score_MPPCA_plot",
+                                           plotOutput("MPPCA_plot_score")
                                   ),
+
+                                  tabPanel("Loading Plot", value = "loading_MPPCA_plot",
+                                           plotOutput("MPPCA_plot_loadings")
+                                  ),
+
+                                  tabPanel("Loading Analysis Plot", value = "loading_analysis_MPPCA_plot",
+                                           plotOutput("MPPCA_plot_loadings_analysis")
+                                  ),
+
+                                  # tabPanel("Contingency Table", value = "contin_MPPCA_table",
+                                  #          "If Group Labels are not given, error will appear as:",
+                                  #          tags$br(),
+                                  #          "Error: all arguments must have the same length",
+                                  #          tags$br(),
+                                  #          "Fix it by selecting Group Labels Column in 'Data' tab.",
+                                  #          verbatimTextOutput("MPPCA_contin_table")
+                                  # ),
 
                                   tabPanel("BIC Plot", value = "BIC_MPPCA_plot",
                                            plotOutput("MPPCA_plot_BIC")
@@ -310,7 +360,7 @@ shinyUI(ui = tagList(
 
              # DPPCA plots
              conditionalPanel(condition="input.analytics_method_tab=='DPPCA_tab'",
-                              mainPanel(
+                              mainPanel(width = 9,
                                 tabsetPanel(
                                   tabPanel("Description", value = "DPPCA_description",
                                            column(12, align="center",
@@ -331,7 +381,7 @@ shinyUI(ui = tagList(
 
     # Guides ------------------------------------------------------------------
     tabPanel("Guides", "This panel is intentionally left blank",
-             mainPanel(
+             mainPanel(width = 9,
                tabsetPanel(
                  tabPanel("Tab 3", "This panel is intentionally left blank",
                           textInput("txt", "Text input:", "general"),

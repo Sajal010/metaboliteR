@@ -17,9 +17,10 @@ shinyServer(function(input, output, session) {
 
     main_data <- reactive({ # Read data
         main_columns <- 1:ncol(original_data())
+        main_columns <- as.numeric(na.omit(main_columns[!colnames(original_data()) %in% unlist(strsplit(input$ignore_column, ","))])) # remove ignore by colname
         main_columns <- main_columns[!main_columns %in% input$cov_slider[1]:input$cov_slider[2]] # remove covariates
         main_columns <- main_columns[main_columns!=input$label_slider] # remove label
-        main_columns <- main_columns[!main_columns %in% as.numeric(unlist(strsplit(input$ignore_column, ",")))] # remove ignore
+        main_columns <- main_columns[!main_columns %in% as.numeric(unlist(strsplit(input$ignore_column, ",")))] # remove ignore by col number
         apply(original_data()[, main_columns], 2,function (y) scale_data(y,input$scale))
         #original_data()[, main_columns]
     })
@@ -169,16 +170,6 @@ shinyServer(function(input, output, session) {
                      }
 
 
-                     output$PPCA_plot <- renderPlot({
-                         plot(PPCA_object, PC=input$main_plot_PC, conf_level=input$conf_int, n=input$n_main)
-                     })
-
-                     if(!is.null(PPCA_object$influence_report)) {
-                         output$PPCA_influence_report <- renderPlot({
-                             plot(PPCA_object$influence_report, PC=input$main_plot_PC)
-                         })
-                     }
-
                      output$PPCA_plot_score <- renderPlot({
                          if(is.null(labels_data())) {
                              plot(PPCA_object$score,
@@ -191,8 +182,18 @@ shinyServer(function(input, output, session) {
                      })
 
                      output$PPCA_plot_loadings <- renderPlot({
-                         plot(PPCA_object$loadings, x_axis_PC = input$x_PC, y_axis_PC = input$y_PC)
+                         plot(PPCA_object$loadings, analysis = FALSE, x_axis_PC = input$x_PC, y_axis_PC = input$y_PC)
                      })
+
+                     output$PPCA_plot_loadings_analysis <- renderPlot({
+                         plot(PPCA_object$loadings, analysis = TRUE, PC=input$main_plot_PC, conf_level=input$conf_int, n=input$n_main)
+                     })
+
+                     if(!is.null(PPCA_object$influence_report)) {
+                         output$PPCA_influence_report <- renderPlot({
+                             plot(PPCA_object$influence_report, PC=input$main_plot_PC)
+                         })
+                     }
 
                      output$PPCA_plot_bic <- renderPlot({
                          plot(PPCA_object$diagnostic)
@@ -219,7 +220,7 @@ shinyServer(function(input, output, session) {
                          output$optimal_q <- renderText("")
                      }
                      else{ # Different PC
-                         output$optimal_q <- renderText(paste("Optimal Q =", PPCA_object$optimal_q))
+                         output$optimal_q <- renderText(paste("Optimal PC =", PPCA_object$optimal_q))
                          if(input$choose_q == TRUE) {
                              PC_max_slider <- PPCA_object$optimal_q
                          }
@@ -235,6 +236,7 @@ shinyServer(function(input, output, session) {
                      updateSliderInput(session, "y_PC", value = PC_max_slider,
                                        min = val[1], max = PC_max_slider)
                      updateSliderInput(session, "n_main", max = length(PPCA_object$significant_x[[input$main_plot_PC]]))
+
                      main_data_names <- as.numeric(colnames(main_data()))
                      updateSliderInput(session, "x_lim", value = c(min(main_data_names),max(main_data_names)),
                                        min = min(main_data_names), max = max(main_data_names))
@@ -257,10 +259,10 @@ shinyServer(function(input, output, session) {
 
                      on.exit(removeNotification("ppca_progress"), add = TRUE)
 
-                     # Switches to Main plot if User is in Description when model has finished running.
+                     # Switches to Score plot if User is in Description when model has finished running.
                      if(input$analytics_plot_tabs == 'PPCA_description') {
                          updateTabsetPanel(session, "analytics_plot_tabs",
-                                           selected = "main_PPCA_plot"
+                                           selected = "score_PPCA_plot"
                          )
                      }
 
@@ -280,11 +282,31 @@ shinyServer(function(input, output, session) {
                                           g_min = input$group_mix_slider[1], g_max = input$group_mix_slider[2],
                                           B=input$bootstrap_mix_n_slider, eps = input$epsilon_mix)
 
+                     output$MPPCA_plot_score <- renderPlot({
+                         if(is.null(labels_data())) {
+                             plot(MPPCA_object$score, x_axis_PC = input$x_mix_PC, y_axis_PC = input$y_mix_PC,
+                                  conf_level = input$post_mix_int)
+                         }
+                         else {
+                             plot(MPPCA_object$score, x_axis_PC = input$x_mix_PC, y_axis_PC = input$y_mix_PC,
+                                  clustering = MPPCA_object$clustering, labels = labels_data(),
+                                  conf_level = input$post_mix_int)
+                         }
 
-
-                     output$MPPCA_contin_table <- renderPrint({
-                         table(unlist(MPPCA_object$groupings), unlist(labels_data()), dnn = c("Predicted","Actual"))
                      })
+
+                     output$MPPCA_plot_loadings <- renderPlot({
+                         plot(MPPCA_object$loadings, group = input$group_mix, analysis = FALSE)
+                     })
+
+                     output$MPPCA_plot_loadings_analysis <- renderPlot({
+                         plot(MPPCA_object$loadings, group = input$group_mix, analysis = TRUE,
+                              PC=input$analysis_mix_plot_PC, conf_level=input$conf_mix_int, n=input$n_mix_main)
+                     })
+
+                     # output$MPPCA_contin_table <- renderPrint({
+                     #     table(unlist(MPPCA_object$groupings), unlist(labels_data()), dnn = c("Predicted","Actual"))
+                     # })
 
                      output$MPPCA_plot_BIC <- renderPlot({
                          plot(MPPCA_object$bic_results)
@@ -299,7 +321,7 @@ shinyServer(function(input, output, session) {
                          output$optimal_mix_q <- renderText("")
                      }
                      else{ # Different PC
-                         output$optimal_mix_q <- renderText(paste("Optimal: Q =", MPPCA_object$optimal_q))
+                         output$optimal_mix_q <- renderText(paste("Optimal: PC =", MPPCA_object$optimal_q))
                          # if(input$choose_q == TRUE) {
                              PC_mix_max_slider <- MPPCA_object$optimal_q
                          # }
@@ -323,16 +345,25 @@ shinyServer(function(input, output, session) {
                          # }
                      }
 
-                     updateSliderInput(session, "main_mix_plot_PC", value = PC_mix_val[1],
+                     updateSliderInput(session, "x_mix_PC", value = PC_mix_val[1],
                                        min = PC_mix_val[1], max = PC_mix_max_slider)
+                     updateSliderInput(session, "y_mix_PC", value = PC_mix_val[1]+1,
+                                       min = PC_mix_val[1], max = PC_mix_max_slider)
+                     updateSliderInput(session, "n_mix_main",
+                                       max = ceiling(dim(MPPCA_object$loadings$loadings[[1]])[1]/4))
+
+                     updateSliderInput(session, "analysis_mix_plot_PC", value = PC_mix_val[1],
+                                       min = PC_mix_val[1], max = PC_mix_max_slider)
+                     updateSliderInput(session, "group_mix", value = PC_mix_val[1],
+                                       min = group_mix_val[1], max = group_mix_val[2])
 
 
                      on.exit(removeNotification("mppca_progress"), add = TRUE)
 
-                     # Switches to Main plot if User is in Description when model has finished running.
+                     # Switches to Score plot if User is in Description when model has finished running.
                      if(input$analytics_mix_plot_tabs == 'MPPCA_description') {
                          updateTabsetPanel(session, "analytics_mix_plot_tabs",
-                                           selected = "main_MPPCA_plot"
+                                           selected = "score_MPPCA_plot"
                          )
                      }
 

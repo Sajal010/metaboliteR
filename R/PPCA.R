@@ -15,7 +15,7 @@
 #'
 #' @examples
 #' PPCA(urine_data, q_max=2)
-PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_it = 1000, B, conf_level=0.95, choose_q = TRUE){
+PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, B = 5, eps = 0.01, max_it = 1000, conf_level=0.95, choose_q = TRUE){
 
   p <- ncol(data) # total number of spectral bins
   n <- nrow(data)
@@ -138,12 +138,18 @@ PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01, max_i
 
   }
 
+  # Rearrange loadings if B exists
+  if(!missing(B)) {
+    output[["loadings"]] <- list(loadings=output[["loadings"]], loadings_sd = loadings_sd)
+    class(output$loadings) <- "PPCA_loadings"
+  }
+
   if(q_min != q_max) {
     output$optimal_q <- optimal_q
   }
 
   output[['alpha_sd']] <- alpha_sd
-  output[['loadings_sd']] <- loadings_sd
+  # output[['loadings_sd']] <- loadings_sd
   output$diagnostic$max_ll_values <- output$max_ll_results
   output$diagnostic$BIC_values <- bic_values
   output$diagnostic$PoV_values <- PoV_values

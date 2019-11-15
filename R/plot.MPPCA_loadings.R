@@ -1,0 +1,341 @@
+#' Title
+#'
+#' @param x a
+#' @param group a
+#' @param analysis a
+#' @param PC a
+#' @param n a
+#' @param conf_level a
+#' @param starting_n a
+#' @param ... a
+#'
+#' @return a
+#' @export plot.MPPCA_loadings
+#' @export
+#'
+#' @importFrom gtools ask
+#' @importFrom graphics pairs
+#'
+plot.MPPCA_loadings <- function(x, group, analysis = FALSE, PC=1, n=5, conf_level=0.95, starting_n = 1, ...){
+  mppca_loadings <- x
+  PC_number <- as.numeric(sub('PC', '', colnames(mppca_loadings$loadings[[1]])))
+  g <- length(mppca_loadings$loadings)
+
+  if(missing(group)) { # group not specified, show all plots
+    if(length(PC_number)==1) { # only 1 PC exists
+
+      count = 1
+      for (group_n in 1:g) {
+        if (analysis == FALSE) { # Normal Loadings plot
+          plot(mppca_loadings$loadings[[group_n]], pch='', main=paste0("MPPCA Loadings for Group ", group_n),
+               xlab=colnames(mppca_loadings$loadings[[group_n]]), ylab=colnames(mppca_loadings$loadings[[group_n]]))
+          text(mppca_loadings$loadings[[group_n]]~mppca_loadings$loadings[[group_n]],
+               labels= row.names(mppca_loadings$loadings[[group_n]]), cex=0.6, font=1)
+          abline(v=0,h=0, col='red')
+        }
+        else { # analysis == TRUE, Loadings analysis plot
+          number <- nrow(mppca_loadings$loadings[[group_n]])
+          q <- dim(mppca_loadings$loadings[[group_n]])[2]
+          ### Add conditions to check for arguments
+
+          if(sum(names(mppca_loadings) == 'loadings_sd') != 1 | is.null(mppca_loadings$loadings_sd[[group_n]])==TRUE){
+            return(print('Bootstrap samples needed to check significant loadings.'))
+          }
+
+          # Confidence interval based on normal distribution x̄ ± z* σ / (√n) n=1 here because each Jackknife is 1?
+          lower_CI <- mppca_loadings$loadings[[group_n]] - (qnorm(conf_level+(1-conf_level)/2)*mppca_loadings$loadings_sd[[group_n]])/sqrt(number)
+          upper_CI <- mppca_loadings$loadings[[group_n]] + (qnorm(conf_level+(1-conf_level)/2)*mppca_loadings$loadings_sd[[group_n]])/sqrt(number)
+
+          #For each component this function creates the table with the name of significant variable,
+          #loading estimate and loading confidence interval.
+          #index: number of the component
+          get_table = function(est, lower, upper, index){
+            significant = sign(lower[,index]) == sign(upper[,index])
+            sig_names = matrix(rownames(est)[significant == TRUE], ncol =1)
+            result = cbind(sig_names, est[significant == TRUE, index], lower[significant == TRUE,index], upper[significant==TRUE,index])
+            colnames(result) = c("variable", "loading", "lower_bound", "upper_bound")
+            return(result)
+          }
+
+          all = sapply(X = seq(1,q,1), FUN = get_table, est = mppca_loadings$loadings[[group_n]], lower = lower_CI, upper = upper_CI)
+
+          significant_x = lapply(all, "[", i =, j = 1)
+          significant_x = lapply(significant_x, as.vector)
+
+          names(significant_x) <- c(paste0("PC", 1:q)) # Rename col names
+
+          # Farthest loadings from 0
+          extract_signi_row <- rownames(mppca_loadings$loadings[[group_n]]) %in% significant_x[[paste0('PC',PC)]] # Extract significant row index
+          signi_loadings <- mppca_loadings$loadings[[group_n]][extract_signi_row, PC] # Extract significant data
+
+          top_spectral_bins <- names(sort(abs(signi_loadings), decreasing = TRUE)[starting_n:(starting_n+n-1)]) # Extract top bins
+
+          top_data <- signi_loadings[names(signi_loadings) %in% top_spectral_bins] # Extract top bins values
+          top_index <- order(abs(top_data), decreasing = TRUE) # Index of farthest to least
+          top_data <- top_data[top_index] # Reorder data farthest to least
+
+          top_lower_CI <- lower_CI[rownames(lower_CI) %in% top_spectral_bins, PC] # Extract top bins values
+          top_lower_CI <- top_lower_CI[top_index] # Reorder data
+
+          top_upper_CI <- upper_CI[rownames(upper_CI) %in% top_spectral_bins, PC] # Extract top bins values
+          top_upper_CI <- top_upper_CI[top_index] # Reorder data
+
+          lower_CI_ylim <- mppca_loadings$loadings[[group_n]] - (qnorm(0.9999+(1-0.9999)/2)*mppca_loadings$loadings_sd[[group_n]])/sqrt(number)
+          top_lower_CI_ylim <- lower_CI_ylim[rownames(lower_CI_ylim) %in% top_spectral_bins, PC] # Extract top bins values
+          upper_CI_ylim <- mppca_loadings$loadings[[group_n]] + (qnorm(0.9999+(1-0.9999)/2)*mppca_loadings$loadings_sd[[group_n]])/sqrt(number)
+          top_upper_CI_ylim <- upper_CI_ylim[rownames(upper_CI_ylim) %in% top_spectral_bins, PC] # Extract top bins values
+
+          barplot(top_data, col='red', border=FALSE, ylim=c(min(c(top_data,top_lower_CI_ylim,0)), max(c(top_data,top_upper_CI_ylim,0))),
+                  main=paste0('Group', group_n, ' Spectral Regions with Loadings \nSignificantly Different from 0'),
+                  xlab='Spectral Regions', ylab=paste0('PC',PC,' Loadings'))
+          grid(nx=0, ny=NULL)
+          barplot(top_data, col='red', xaxt='n', yaxt='n', border=FALSE, add=TRUE) # redraw bars to cover grid
+          abline(h=0)
+          arrows_x <- seq(1-.275,n*1.2-.275,1.2)
+          arrows(x0=arrows_x,y0=top_lower_CI,y1=top_upper_CI,angle=90,code=3,length=0.8/n) # CI Error bars
+        }
+        if (count < g) {
+          ask(msg = "Press <RETURN> to view the next group: ")
+          count = count + 1
+        }
+      }
+    }
+
+    else { # more than 1 PC exists
+      count = 1
+      for (group_n in 1:g) {
+        if (analysis == FALSE) { # Normal loadings plot
+          pairs(mppca_loadings$loadings[[group_n]],
+                lower.panel = function(x, y, names) {
+                  text(x, y, rownames(mppca_loadings$loadings[[group_n]]), cex = 0.8)
+                  abline(v=0, h = 0, col = "red")
+                }, upper.panel = function(x, y, names) {
+                  text(x, y, rownames(mppca_loadings$loadings[[group_n]]), cex = 0.8)
+                  abline(v=0, h = 0, col = "red")
+                },
+                labels = paste0("PC", PC_number),
+                main = paste0("MPPCA Loadings for Group ", group_n))
+        }
+        else { # analysis == TRUE, Loadings analysis plot
+          number <- nrow(mppca_loadings$loadings[[group_n]])
+          q <- dim(mppca_loadings$loadings[[group_n]])[2]
+          ### Add conditions to check for arguments
+
+          if(sum(names(mppca_loadings) == 'loadings_sd') != 1 | is.null(mppca_loadings$loadings_sd[[group_n]])==TRUE){
+            return(print('Bootstrap samples needed to check significant loadings.'))
+          }
+
+          # Confidence interval based on normal distribution x̄ ± z* σ / (√n) n=1 here because each Jackknife is 1?
+          lower_CI <- mppca_loadings$loadings[[group_n]] - (qnorm(conf_level+(1-conf_level)/2)*mppca_loadings$loadings_sd[[group_n]])/sqrt(number)
+          upper_CI <- mppca_loadings$loadings[[group_n]] + (qnorm(conf_level+(1-conf_level)/2)*mppca_loadings$loadings_sd[[group_n]])/sqrt(number)
+
+          #For each component this function creates the table with the name of significant variable,
+          #loading estimate and loading confidence interval.
+          #index: number of the component
+          get_table = function(est, lower, upper, index){
+            significant = sign(lower[,index]) == sign(upper[,index])
+            sig_names = matrix(rownames(est)[significant == TRUE], ncol =1)
+            result = cbind(sig_names, est[significant == TRUE, index], lower[significant == TRUE,index], upper[significant==TRUE,index])
+            colnames(result) = c("variable", "loading", "lower_bound", "upper_bound")
+            return(result)
+          }
+
+          all = sapply(X = seq(1,q,1), FUN = get_table, est = mppca_loadings$loadings[[group_n]], lower = lower_CI, upper = upper_CI)
+
+          significant_x = lapply(all, "[", i =, j = 1)
+          significant_x = lapply(significant_x, as.vector)
+
+          names(significant_x) <- c(paste0("PC", 1:q)) # Rename col names
+
+          # Farthest loadings from 0
+          extract_signi_row <- rownames(mppca_loadings$loadings[[group_n]]) %in% significant_x[[paste0('PC',PC)]] # Extract significant row index
+          signi_loadings <- mppca_loadings$loadings[[group_n]][extract_signi_row, PC] # Extract significant data
+
+          top_spectral_bins <- names(sort(abs(signi_loadings), decreasing = TRUE)[starting_n:(starting_n+n-1)]) # Extract top bins
+
+          top_data <- signi_loadings[names(signi_loadings) %in% top_spectral_bins] # Extract top bins values
+          top_index <- order(abs(top_data), decreasing = TRUE) # Index of farthest to least
+          top_data <- top_data[top_index] # Reorder data farthest to least
+
+          top_lower_CI <- lower_CI[rownames(lower_CI) %in% top_spectral_bins, PC] # Extract top bins values
+          top_lower_CI <- top_lower_CI[top_index] # Reorder data
+
+          top_upper_CI <- upper_CI[rownames(upper_CI) %in% top_spectral_bins, PC] # Extract top bins values
+          top_upper_CI <- top_upper_CI[top_index] # Reorder data
+
+          lower_CI_ylim <- mppca_loadings$loadings[[group_n]] - (qnorm(0.9999+(1-0.9999)/2)*mppca_loadings$loadings_sd[[group_n]])/sqrt(number)
+          top_lower_CI_ylim <- lower_CI_ylim[rownames(lower_CI_ylim) %in% top_spectral_bins, PC] # Extract top bins values
+          upper_CI_ylim <- mppca_loadings$loadings[[group_n]] + (qnorm(0.9999+(1-0.9999)/2)*mppca_loadings$loadings_sd[[group_n]])/sqrt(number)
+          top_upper_CI_ylim <- upper_CI_ylim[rownames(upper_CI_ylim) %in% top_spectral_bins, PC] # Extract top bins values
+
+          barplot(top_data, col='red', border=FALSE, ylim=c(min(c(top_data,top_lower_CI_ylim,0)), max(c(top_data,top_upper_CI_ylim,0))),
+                  main=paste0('Group', group_n, ' Spectral Regions with Loadings \nSignificantly Different from 0'),
+                  xlab='Spectral Regions', ylab=paste0('PC',PC,' Loadings'))
+          grid(nx=0, ny=NULL)
+          barplot(top_data, col='red', xaxt='n', yaxt='n', border=FALSE, add=TRUE) # redraw bars to cover grid
+          abline(h=0)
+          arrows_x <- seq(1-.275,n*1.2-.275,1.2)
+          arrows(x0=arrows_x,y0=top_lower_CI,y1=top_upper_CI,angle=90,code=3,length=0.8/n) # CI Error bars
+        }
+        if (count < g) {
+          ask(msg = "Press <RETURN> to view the next group: ")
+          count = count + 1
+        }
+      }
+    }
+  }
+
+# Specific group is chosen ------------------------------------------------
+
+  else { # if group is specified
+    if(length(PC_number)==1) { # only 1 PC exists
+      if (analysis == FALSE) { # Normal loading plots
+        plot(mppca_loadings$loadings[[group]], pch='', main=paste0("MPPCA Loadings for Group ", group),
+             xlab=colnames(mppca_loadings$loadings[[group]]), ylab=colnames(mppca_loadings$loadings[[group]]))
+        text(mppca_loadings$loadings[[group]]~mppca_loadings$loadings[[group]],
+             labels= row.names(mppca_loadings$loadings[[group]]), cex=0.6, font=1)
+        abline(v=0,h=0, col='red')
+      }
+      else { # analysis == TRUE, Loadings analysis plot
+        number <- nrow(mppca_loadings$loadings[[group]])
+        q <- dim(mppca_loadings$loadings[[group]])[2]
+        ### Add conditions to check for arguments
+
+        if(sum(names(mppca_loadings) == 'loadings_sd') != 1 | is.null(mppca_loadings$loadings_sd[[group]])==TRUE){
+          return(print('Bootstrap samples needed to check significant loadings.'))
+        }
+
+        # Confidence interval based on normal distribution x̄ ± z* σ / (√n) n=1 here because each Jackknife is 1?
+        lower_CI <- mppca_loadings$loadings[[group]] - (qnorm(conf_level+(1-conf_level)/2)*mppca_loadings$loadings_sd[[group]])/sqrt(number)
+        upper_CI <- mppca_loadings$loadings[[group]] + (qnorm(conf_level+(1-conf_level)/2)*mppca_loadings$loadings_sd[[group]])/sqrt(number)
+
+        #For each component this function creates the table with the name of significant variable,
+        #loading estimate and loading confidence interval.
+        #index: number of the component
+        get_table = function(est, lower, upper, index){
+          significant = sign(lower[,index]) == sign(upper[,index])
+          sig_names = matrix(rownames(est)[significant == TRUE], ncol =1)
+          result = cbind(sig_names, est[significant == TRUE, index], lower[significant == TRUE,index], upper[significant==TRUE,index])
+          colnames(result) = c("variable", "loading", "lower_bound", "upper_bound")
+          return(result)
+        }
+
+        all = sapply(X = seq(1,q,1), FUN = get_table, est = mppca_loadings$loadings[[group]], lower = lower_CI, upper = upper_CI)
+
+        significant_x = lapply(all, "[", i =, j = 1)
+        significant_x = lapply(significant_x, as.vector)
+
+        names(significant_x) <- c(paste0("PC", 1:q)) # Rename col names
+
+        # Farthest loadings from 0
+        extract_signi_row <- rownames(mppca_loadings$loadings[[group]]) %in% significant_x[[paste0('PC',PC)]] # Extract significant row index
+        signi_loadings <- mppca_loadings$loadings[[group]][extract_signi_row, PC] # Extract significant data
+
+        top_spectral_bins <- names(sort(abs(signi_loadings), decreasing = TRUE)[starting_n:(starting_n+n-1)]) # Extract top bins
+
+        top_data <- signi_loadings[names(signi_loadings) %in% top_spectral_bins] # Extract top bins values
+        top_index <- order(abs(top_data), decreasing = TRUE) # Index of farthest to least
+        top_data <- top_data[top_index] # Reorder data farthest to least
+
+        top_lower_CI <- lower_CI[rownames(lower_CI) %in% top_spectral_bins, PC] # Extract top bins values
+        top_lower_CI <- top_lower_CI[top_index] # Reorder data
+
+        top_upper_CI <- upper_CI[rownames(upper_CI) %in% top_spectral_bins, PC] # Extract top bins values
+        top_upper_CI <- top_upper_CI[top_index] # Reorder data
+
+        lower_CI_ylim <- mppca_loadings$loadings[[group]] - (qnorm(0.9999+(1-0.9999)/2)*mppca_loadings$loadings_sd[[group]])/sqrt(number)
+        top_lower_CI_ylim <- lower_CI_ylim[rownames(lower_CI_ylim) %in% top_spectral_bins, PC] # Extract top bins values
+        upper_CI_ylim <- mppca_loadings$loadings[[group]] + (qnorm(0.9999+(1-0.9999)/2)*mppca_loadings$loadings_sd[[group]])/sqrt(number)
+        top_upper_CI_ylim <- upper_CI_ylim[rownames(upper_CI_ylim) %in% top_spectral_bins, PC] # Extract top bins values
+
+        barplot(top_data, col='red', border=FALSE, ylim=c(min(c(top_data,top_lower_CI_ylim,0)), max(c(top_data,top_upper_CI_ylim,0))),
+                main=paste0('Group', group, ' Spectral Regions with Loadings \nSignificantly Different from 0'),
+                xlab='Spectral Regions', ylab=paste0('PC',PC,' Loadings'))
+        grid(nx=0, ny=NULL)
+        barplot(top_data, col='red', xaxt='n', yaxt='n', border=FALSE, add=TRUE) # redraw bars to cover grid
+        abline(h=0)
+        arrows_x <- seq(1-.275,n*1.2-.275,1.2)
+        arrows(x0=arrows_x,y0=top_lower_CI,y1=top_upper_CI,angle=90,code=3,length=0.8/n) # CI Error bars
+      }
+    }
+    else { # more than 1 PC exists
+      if (analysis == FALSE) { # Normal loadings plot
+        pairs(mppca_loadings$loadings[[group]],
+              lower.panel = function(x, y, names) {
+                text(x, y, rownames(mppca_loadings$loadings[[group]]), cex = 0.8)
+                abline(v=0, h = 0, col = "red")
+              }, upper.panel = function(x, y, names) {
+                text(x, y, rownames(mppca_loadings$loadings[[group]]), cex = 0.8)
+                abline(v=0, h = 0, col = "red")
+              },
+              labels = paste0("PC", PC_number),
+              main = paste0("MPPCA Loadings for Group ", group))
+      }
+      else { # analysis == TRUE, Loadings analysis plot
+
+        number <- nrow(mppca_loadings$loadings[[group]])
+        q <- dim(mppca_loadings$loadings[[group]])[2]
+        ### Add conditions to check for arguments
+
+        if(sum(names(mppca_loadings) == 'loadings_sd') != 1 | is.null(mppca_loadings$loadings_sd[[group]])==TRUE){
+          return(print('Bootstrap samples needed to check significant loadings.'))
+        }
+
+        # Confidence interval based on normal distribution x̄ ± z* σ / (√n) n=1 here because each Jackknife is 1?
+        lower_CI <- mppca_loadings$loadings[[group]] - (qnorm(conf_level+(1-conf_level)/2)*mppca_loadings$loadings_sd[[group]])/sqrt(number)
+        upper_CI <- mppca_loadings$loadings[[group]] + (qnorm(conf_level+(1-conf_level)/2)*mppca_loadings$loadings_sd[[group]])/sqrt(number)
+
+        #For each component this function creates the table with the name of significant variable,
+        #loading estimate and loading confidence interval.
+        #index: number of the component
+        get_table = function(est, lower, upper, index){
+          significant = sign(lower[,index]) == sign(upper[,index])
+          sig_names = matrix(rownames(est)[significant == TRUE], ncol =1)
+          result = cbind(sig_names, est[significant == TRUE, index], lower[significant == TRUE,index], upper[significant==TRUE,index])
+          colnames(result) = c("variable", "loading", "lower_bound", "upper_bound")
+          return(result)
+        }
+
+        all = sapply(X = seq(1,q,1), FUN = get_table, est = mppca_loadings$loadings[[group]], lower = lower_CI, upper = upper_CI)
+
+        significant_x = lapply(all, "[", i =, j = 1)
+        significant_x = lapply(significant_x, as.vector)
+
+        names(significant_x) <- c(paste0("PC", 1:q)) # Rename col names
+
+        # Farthest loadings from 0
+        extract_signi_row <- rownames(mppca_loadings$loadings[[group]]) %in% significant_x[[paste0('PC',PC)]] # Extract significant row index
+        signi_loadings <- mppca_loadings$loadings[[group]][extract_signi_row, PC] # Extract significant data
+
+        top_spectral_bins <- names(sort(abs(signi_loadings), decreasing = TRUE)[starting_n:(starting_n+n-1)]) # Extract top bins
+
+        top_data <- signi_loadings[names(signi_loadings) %in% top_spectral_bins] # Extract top bins values
+        top_index <- order(abs(top_data), decreasing = TRUE) # Index of farthest to least
+        top_data <- top_data[top_index] # Reorder data farthest to least
+
+        top_lower_CI <- lower_CI[rownames(lower_CI) %in% top_spectral_bins, PC] # Extract top bins values
+        top_lower_CI <- top_lower_CI[top_index] # Reorder data
+
+        top_upper_CI <- upper_CI[rownames(upper_CI) %in% top_spectral_bins, PC] # Extract top bins values
+        top_upper_CI <- top_upper_CI[top_index] # Reorder data
+
+        lower_CI_ylim <- mppca_loadings$loadings[[group]] - (qnorm(0.9999+(1-0.9999)/2)*mppca_loadings$loadings_sd[[group]])/sqrt(number)
+        top_lower_CI_ylim <- lower_CI_ylim[rownames(lower_CI_ylim) %in% top_spectral_bins, PC] # Extract top bins values
+        upper_CI_ylim <- mppca_loadings$loadings[[group]] + (qnorm(0.9999+(1-0.9999)/2)*mppca_loadings$loadings_sd[[group]])/sqrt(number)
+        top_upper_CI_ylim <- upper_CI_ylim[rownames(upper_CI_ylim) %in% top_spectral_bins, PC] # Extract top bins values
+
+        barplot(top_data, col='red', border=FALSE, ylim=c(min(c(top_data,top_lower_CI_ylim,0)), max(c(top_data,top_upper_CI_ylim,0))),
+                main=paste0('Group', group, ' Spectral Regions with Loadings \nSignificantly Different from 0'),
+                xlab='Spectral Regions', ylab=paste0('PC',PC,' Loadings'))
+        grid(nx=0, ny=NULL)
+        barplot(top_data, col='red', xaxt='n', yaxt='n', border=FALSE, add=TRUE) # redraw bars to cover grid
+        abline(h=0)
+        arrows_x <- seq(1-.275,n*1.2-.275,1.2)
+        arrows(x0=arrows_x,y0=top_lower_CI,y1=top_upper_CI,angle=90,code=3,length=0.8/n) # CI Error bars
+
+      }
+    }
+  }
+}
+
+

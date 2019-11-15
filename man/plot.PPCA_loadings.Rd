@@ -4,7 +4,8 @@
 \alias{plot.PPCA_loadings}
 \title{Title}
 \usage{
-\method{plot}{PPCA_loadings}(x, x_axis_PC, y_axis_PC, ...)
+\method{plot}{PPCA_loadings}(x, x_axis_PC, y_axis_PC, analysis = FALSE,
+  PC = 1, n = 5, conf_level = 0.95, starting_n = 1, ...)
 }
 \arguments{
 \item{x}{a}
@@ -12,6 +13,16 @@
 \item{x_axis_PC}{a}
 
 \item{y_axis_PC}{a}
+
+\item{analysis}{a}
+
+\item{PC}{a}
+
+\item{n}{a}
+
+\item{conf_level}{a}
+
+\item{starting_n}{a}
 
 \item{...}{a}
 }
