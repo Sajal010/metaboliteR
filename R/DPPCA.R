@@ -58,6 +58,7 @@ DPPCA = function(q,chain_output, prior_params, burn_in, thin, data_time){
   U =  lapply(initial, "[[", "U")
   names(U)=  paste0(rep("U", M), seq(1,M,1))
   W =  lapply(initial, "[[", "W")
+  W_template <- W
 
   ###### Initialize the SV of errors ####
   eta = log(Sig)
@@ -85,8 +86,8 @@ DPPCA = function(q,chain_output, prior_params, burn_in, thin, data_time){
   v2_chain = rep(NA, chain_size)
   nu_chain = rep(NA, chain_size)
   phi_chain = rep(NA, chain_size)
-  V_chain = matrix(NA, nrow = chain_size, ncol = q)
-  mu_chain = matrix(NA, nrow = chain_size, ncol = q)
+  V_chain =  rep(list(matrix(NA, nrow = 1, ncol = q)), chain_size)
+  mu_chain = rep(list(matrix(NA, nrow = 1, ncol = q)), chain_size)
   Phi_chain = rep(list(matrix(NA, nrow = 1, ncol = q)), chain_size)
 
   #Store acception for MH steps
@@ -140,11 +141,11 @@ DPPCA = function(q,chain_output, prior_params, burn_in, thin, data_time){
 
     #Step 3A
     V = gibbs_V(alpha_V,beta_V,lambda,Phi, mu)
-    V_chain[step,]<- V
+    V_chain[[step]]<- V
 
     #Step 3B
     mu = gibbs_mu(sigma2_nu, Phi,V,lambda)
-    mu_chain[step,] <- mu
+    mu_chain[[step]] <- mu
 
     #Step 3C
     mh4 = MH_Phi(mu_Phi, sigma2_Phi,Phi, V,lambda, mu, accept_Phi)
@@ -200,6 +201,7 @@ DPPCA = function(q,chain_output, prior_params, burn_in, thin, data_time){
                 nu_chain = nu_chain,
                 V_chain = V_chain,
                 mu_chain = mu_chain,
-                persistance = persistance_params)
+                persistance = persistance_params,
+                W_rotate = W_template)
   return(output)
 }

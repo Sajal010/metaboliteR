@@ -9,8 +9,8 @@
 
 pareto_scale = function(index,data){
   data_scaled<- sweep(data[[index]],2,colMeans(data[[index]]),"-")
-  data_scaled <- sweep(data[[index]],2,sqrt(apply(data[[index]],2,sd)),"/")
-  out = list()
+  data_scaled <- sweep(data_scaled,2,sqrt(apply(data_scaled,2,sd)),"/")
+  out = list();
   out[[paste0("M",index)]] <- data_scaled
   return(out)
 }
