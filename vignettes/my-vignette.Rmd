@@ -29,7 +29,7 @@ data("UrineSpectra")
 We fit the model using PPCA comand where the minimum and maximum number of principal components are specified in arguments **q_min** and **q_max**. By default, the optimal q is selected based on the BIC criterion. The option **B** controls the number of bootstrap replicas to be run to assess uncertainty of the loadings matrix. The parameter **eps** controls the convergence of the EM algorithm.
 
 ```{r, cache=TRUE}
-ppca = PPCA(data = UrineSpectra[[1]],q_min = 1, q_max = 10, B=100, eps = 0.1)
+ppca = PPCA(data = UrineSpectra[[1]],q_min = 1, q_max = 10, B=30, eps = 0.1)
 ```
 
 From the model output we can plot the BIC values and proportion of variation explained by each model. The score plot is also avaliable. If groups labels are of interest, they can be assigned to the score plot. According to BIC, the best number of components is 2, which can also be assessed running **ppca$optimal_q**.
@@ -63,7 +63,7 @@ In this example we incorporate the covariate weights using the Urine Spectra dat
 
 ```{r fig3, fig.height= 5, fig.width= 7, cache = TRUE}
 weights = UrineSpectra[[2]][,2]
-ppcca = PPCA(data = UrineSpectra[[1]], covariates_data = weights, q_min = 1, q_max = 10, B =100)
+ppcca = PPCA(data = UrineSpectra[[1]], covariates_data = weights, q_min = 1, q_max = 10, B = 30)
 ```
 
 We can inspect the significance of the covariates in the each of the components. The selected q is 2, so we plot the covariate influence for these two components in the next commands.
@@ -109,7 +109,7 @@ The BIC criteria selects the optimal number of groups **g** and of principal com
 plot(mppca$bic_results)
 ```
 
-The selected g and q for the brain spectra data set were 4 and 7 respectively. Using the folliwong commands we can assess estimates of the model parameters.
+The selected g and q for the brain spectra data set were 4 and 7 respectively. Using the following commands we can assess estimates of the model parameters.
 
 ```{r, results='hide'}
 mppca$pi           #probability of group membership
