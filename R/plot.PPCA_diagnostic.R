@@ -13,7 +13,7 @@
 plot.PPCA_diagnostic <- function(x, max_ll = FALSE, ...) {
   if(max_ll){
     plot.default(x$max_ll_values, main='Convergence Check', xlab='Number of Iteration',
-                 ylab='Max Log Likelihood', type='b')
+                 ylab='Max Log Likelihood', type='l')
   }
   else {
     par(mar = c(5, 4, 4, 4) + 0.3)  # Leave space for 2nd y axis

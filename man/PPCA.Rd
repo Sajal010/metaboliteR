@@ -4,8 +4,8 @@
 \alias{PPCA}
 \title{Title}
 \usage{
-PPCA(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01,
-  max_it = 1000, B, conf_level = 0.95, choose_q = TRUE)
+PPCA(data, covariates_data, q_min = 1, q_max = 10, B = 5,
+  eps = 0.01, max_it = 1000, conf_level = 0.95, choose_q = TRUE)
 }
 \arguments{
 \item{data}{Metabolomic data}
@@ -16,11 +16,11 @@ PPCA(data, covariates_data, q_min = 1, q_max = 10, eps = 0.01,
 
 \item{q_max}{Maximum number of principal component}
 
+\item{B}{Number of Bootstrap runs}
+
 \item{eps}{Epsilon criterion (decision threshold) for convergence}
 
 \item{max_it}{Maximum iteration runs}
-
-\item{B}{Number of Bootstrap runs}
 
 \item{conf_level}{Confidence Level}
 

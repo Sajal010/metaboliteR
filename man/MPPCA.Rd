@@ -4,7 +4,8 @@
 \alias{MPPCA}
 \title{MPPCA}
 \usage{
-MPPCA(data, q_min, q_max, g_min, g_max, eps = 0.1, B = 100)
+MPPCA(data, q_min = 1, q_max = 2, g_min = 1, g_max = 2,
+  eps = 0.1, B = 5)
 }
 \arguments{
 \item{data}{Data to perform MPPCA on}

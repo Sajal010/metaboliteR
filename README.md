@@ -1,4 +1,4 @@
-# metaboliteR <img src="/inst/shinyApp/www/logo.png" height="132" width="110" align="right"/>
+# metaboliteR <img src="https://gitlab.com/metaboliter/metaboliter/raw/master/inst/shinyApp/www/logo.png" height="132" width="110" align="right"/>
 
 [![pipeline status](https://gitlab.com/metaboliter/metaboliter/badges/master/pipeline.svg)](https://gitlab.com/metaboliter/metaboliter/pipelines)
 [![coverage report](https://gitlab.com/metaboliter/metaboliter/badges/master/coverage.svg)](https://metaboliter.gitlab.io/metaboliter/coverage)

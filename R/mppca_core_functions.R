@@ -114,10 +114,10 @@ MPPCA_one_q_one_g <- function(data, q, g, max_it = 1000,eps = 0.1, initial.guess
       tau = compute_tau(data_scaled,mu_g_new, pi_new, Sig, w_g)
 
       #2. Compute E(uig)
-      e_uig = e_uig(w_g, mu_g_new, Sig, data_scaled)
+      e_uig_new = e_uig(w_g, mu_g_new, Sig, data_scaled)
 
       #Compute E[uit uitT]
-      E_uu = E_uig_uig(w_g, Sig, e_uig,n)
+      E_uu = E_uig_uig(w_g, Sig, e_uig_new,n)
 
       ##    Mstep 2
 
@@ -144,7 +144,57 @@ MPPCA_one_q_one_g <- function(data, q, g, max_it = 1000,eps = 0.1, initial.guess
 
     bic <- bic_value(ll, df, n)  #Check if this is supposed to be the observed loglik
 
+    # Rename loadings data structure
+    names(w_g_new) <- c(paste0("Group", 1:g)) # Rename list names
+
+    clusters <- data.frame(matrix(max.col(tau), nrow=n))
+    colnames(clusters) <- "Group"
+
+    # Reorganize score data structure (full score)
+    score.new <- c()
+    for(group_n in 1:g){
+      temp <- c()
+      for(obs_n in 1:n) {
+        temp <- cbind(temp, e_uig_new[[obs_n]][,group_n])
+      }
+      rownames(temp) <- c(paste0("PC", 1:q)) # Rename row names
+      colnames(temp) <- rownames(data) # Rename col names
+      score.new[[group_n]] <- temp
+    }
+    names(score.new) <- c(paste0("Group", 1:g)) # Rename list names
+
+    score_specific <- c()
+    for(cluster_n in 1:g) {
+      score_specific[[cluster_n]] <- score.new[[cluster_n]][,unlist(clusters, use.names = FALSE)==cluster_n]
+
+      if(q==1) { # Properly name when q = 1 only
+        score_specific[[cluster_n]] <- matrix(score_specific[[cluster_n]], ncol = length(score_specific[[cluster_n]]), dimnames = list("PC1")) # Rename row names
+      }
+    }
+    names(score_specific) <- c(paste0("Group", 1:g)) # Rename list names
+
+    # Posterior score variance
+    if(q==1){
+      score_var <- list()
+    }
+    else{
+      score_var <- c()
+    }
+    for(group_n in 1:g) {
+      score_var[[group_n]] <- Sig_new * solve((t(w_g_new[[group_n]]) %*% w_g_new[[group_n]]) +
+                                                   (Sig_new * diag(q)))
+    }
+
+    names(score_var) <- c(paste0("Group", 1:g)) # Rename row names
+
+    score <- list(score = score_specific, score_var = score_var)
+
+    class(score) <- c("MPPCA_score")
+    class(w_g_new) <- c("MPPCA_loadings")
+
     output <- list(sigma2 =Sig_new,
+                   score = score,
+                   clustering = clusters,
                    loadings = w_g_new,
                    pi = pi_new,
                    mu = mu_g_new,

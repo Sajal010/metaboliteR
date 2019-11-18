@@ -19,7 +19,7 @@
 #' @return List of outputs.
 #' @export
 
-MPPCA = function(data, q_min, q_max, g_min, g_max, eps = 0.1, B=100){
+MPPCA = function(data, q_min=1, q_max=2, g_min=1, g_max=2, eps = 0.1, B=5){
 
   if(q_min == q_max && g_min == g_max){
 
@@ -71,11 +71,14 @@ MPPCA = function(data, q_min, q_max, g_min, g_max, eps = 0.1, B=100){
 
   if(!missing(B)){
     loadings_sd = loadings_std_mppca(data, q = opt_q, g = opt_g, initial.guesses, B)
+    names(loadings_sd) <- c(paste0("Group", g_min:opt_g)) # Rename list names
+    result$loadings <- list(loadings=result$loadings, loadings_sd=loadings_sd)
+    class(result$loadings) <- "MPPCA_loadings"
   } else {
     loadings_sd = NULL
   }
 
-  result$loadings_sd = loadings_sd
+  # result$loadings_sd = loadings_sd
   result$optimal_q = opt_q
   result$optimal_g = opt_g
   result$bic_results = comb
