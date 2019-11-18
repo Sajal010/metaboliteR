@@ -4,6 +4,7 @@
 #' @importFrom msm rtnorm
 #' @importFrom mvtnorm rmvnorm dmvnorm
 #' @importFrom LearnBayes rigamma
+#' @importFrom vegan procrustes
 
 #  Data  -------------------------------------------------------------
 
@@ -25,6 +26,7 @@ ppca_initial_values = function(index, q, data){
                 U = U, H=H, W=W)
   return(output)
 }
+
 
 #  Gibbs U -------------------------------------------------------------
 gibbs_U = function(data, eta, W, H){
@@ -326,6 +328,31 @@ MH_Phi = function(mu_Phi,sigma2_Phi, Phi, V, lambda, mu, accept_Phi){
 
   output = list(Phi=Phi, accepted = accepted)
   return(output)
+
+}
+
+#  Posterior manipulation  -------------------------------------------------------------
+
+rotate_W_U = function(W_chain,U_chain, W_reference){
+
+  chain_length = length(W_chain)      #element of original chain
+  M = length(W_chain[[1]])            #multiple time points
+  p = dim(W_chain[[1]][[1]])[1];
+  q = dim(U_chain[[1]][[1]])[1]; n = dim(U_chain[[1]][[1]])[2];
+
+  U_rotated = rep(list(rep(list(matrix(NA, nrow = n, ncol = q)),M)), chain_length)
+  W_rotated = rep(list(rep(list(matrix(NA, nrow = q, ncol = p)),M)), chain_length)
+
+  #rotation:
+  for(i in 1:chain_length){
+    for(m in 1:M){
+      proc = vegan::procrustes(W_reference[[m]], W_chain[[i]][[m]], translation=FALSE, dilation=FALSE)
+      W_rotated[[i]][[m]] <- proc$Yrot;
+      U_rotated[[i]][[m]] <- proc$rotation%*%(U_chain[[i]][[m]])
+    }
+  }
+
+  return(list(W_rotated = W_rotated, U_rotated = U_rotated))
 
 }
 
