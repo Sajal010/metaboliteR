@@ -356,3 +356,63 @@ rotate_W_U = function(W_chain,U_chain, W_reference){
 
 }
 
+posterior_U = function(m, rotated_U){
+
+  U_m = lapply(rotated_U, "[[", m)
+  U_post = apply(simplify2array(U_m), c(1,2), function(x) quantile(x, 0.5))
+
+  return(list(U_post = U_post))
+}
+
+posterior_W = function(m, rotated_W){
+
+  W_m = lapply(rotated_W, "[[", m)
+  W_post = apply(simplify2array(W_m), c(1,2), function(x) quantile(x, 0.5))
+
+  return(list(W_post = W_post))
+}
+
+rotate_post_scores=function(U_post, W_post){
+  M = length(U_post)
+  q = dim(U_post[[1]])[1]; n = dim(U_post[[1]])[2];
+  U_post_rot = list(rep(matrix(NA, nrow = q, ncol = n),M))
+
+  for(m in 1:M){
+    template <- W_post[[1]]
+    if(m==1){
+      U_post_rot[[m]] <- t(U_post[[1]])
+    } else {
+      res <- vegan::procrustes(W_post[[m]], template, translation=FALSE, dilation=FALSE)
+      U_post_rot[[m]] <- t(t(res$rotation)%*%U_post[[m]])
+    }
+  }
+  return(list(U_post_rot = U_post_rot))
+}
+
+sig_loadings = function(time, PC, W, cred_level){
+  alpha = 1-cred_level
+  W_m = lapply(W, "[[", time)
+
+  W_inf = apply(simplify2array(W_m), c(1,2), function(x) quantile(x, alpha/2))
+  W_upp = apply(simplify2array(W_m), c(1,2), function(x) quantile(x, 1-alpha/2))
+  W_est = apply(simplify2array(W_m), c(1,2), function(x) quantile(x, 0.5))
+
+  p = dim(W_est)[1]
+  store_sig = list();
+  for(i in 1:p){
+    sig = ifelse((sign(W_inf[i, PC]) != sign(W_upp[i, PC])) == TRUE, 0, 1)
+    if(sig ==1){
+      store <- list(matrix(c(rownames(W_inf)[i], W_est[i, PC], W_inf[i, PC],  W_upp[i, PC]), nrow =1))
+      store_sig = c(store_sig, store)
+    }
+  }
+
+  store_sig = data.frame(matrix(unlist(store_sig), ncol = 4, byrow = TRUE))
+  names(store_sig) = c("spectral_bin", "estimate", "lower", "upper")
+  store_sig$estimate = as.numeric(as.character(store_sig$estimate))
+  store_sig$lower = as.numeric(as.character(store_sig$lower))
+  store_sig$upper = as.numeric(as.character(store_sig$upper))
+  return(store_sig)
+}
+
+
