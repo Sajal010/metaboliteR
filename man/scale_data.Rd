@@ -2,15 +2,15 @@
 % Please edit documentation in R/Scaling_type.R
 \name{scale_data}
 \alias{scale_data}
-\title{Scales the data}
+\title{Title}
 \usage{
 scale_data(x, scale_type = "none")
 }
 \arguments{
 \item{x}{data}
 
-\item{scale_type}{Type of scaling}
+\item{scale_type}{scaling type to be used by the user}
 }
 \description{
-Scales the data
+Title
 }

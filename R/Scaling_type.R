@@ -19,18 +19,20 @@ vastscale<-function(x){
 }
 
 
-#' Scales the data
-#'
+#' Title
+#' @importFrom KODAMA normalization
 #' @param x data
-#' @param scale_type Type of scaling
+#' @param scale_type scaling type to be used by the user
 #'
 #' @export
 #'
-
 scale_data <- function(x, scale_type="none"){
 
   if(scale_type=="none")
     x
+
+  else if(scale_type=="PQN")
+    normalization(x, method = "pqn")
 
   else if(scale_type=="autoscale")
     autoscale(x)
