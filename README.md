@@ -4,20 +4,20 @@
 [![coverage report](https://gitlab.com/metaboliter/metaboliter/badges/master/coverage.svg)](https://metaboliter.gitlab.io/metaboliter/coverage)
 
 ## Overview
----
-metaboliteR is a R package that provides few Probabilistic PCA (PPCA) methods [Nyamundanda G. et al. (2010)](http://hdl.handle.net/10197/2835) to analyse metabolomic data. PPCA is an extension of the PCA method with probabilistic basis which offers quantification of statistical uncertainty in the model. While PCA uses orthogonal transformation to obtain Principal Components (PC) scores, PPCA assumes a multivariate Gaussian distribution on the Principal Components scores and estimate the model parameter through Expectation-Maximisation (EM) algorithm. There are also further extension with PPCCA (including covariates), MPPCA (accounting groupings) and DPPCA (different time points) [Nyamundanda G. et al. (2014)](http://hdl.handle.net/10197/7107). 
 
-In addition, metaboliteR also incorporates a method of estimating sample size for metabolomic experiments introduced by [Nyamundanda G. et al. (2013)](http://hdl.handle.net/10197/5043).
+metaboliteR is a R package that provides few Probabilistic PCA (PPCA) methods [(Nyamundanda G. et al. 2010)](http://hdl.handle.net/10197/2835) to analyse metabolomic data. PPCA is an extension of the PCA method with probabilistic basis which offers quantification of statistical uncertainty in the model. While PCA uses orthogonal transformation to obtain Principal Components (PC) scores, PPCA assumes a multivariate Gaussian distribution on the Principal Components scores and estimate the model parameter through Expectation-Maximisation (EM) algorithm. There are also further extension with PPCCA (including covariates), MPPCA (accounting groupings) and DPPCA (different time points) [(Nyamundanda G. et al. 2014)](http://hdl.handle.net/10197/7107). 
+
+In addition, metaboliteR also incorporates a method of estimating sample size for metabolomic experiments introduced by [(Nyamundanda G. et al. 2013)](http://hdl.handle.net/10197/5043).
 
 metaboliteR also has a graphical user interface (GUI) application through the use of Shiny. This can be accessed through [here]() or the image below:
 
-[<img src="https://gitlab.com/metaboliter/metaboliter/raw/master/inst/shinyApp/www/app-logo.png" height="60" width="119"/>](https://gitlab.com/metaboliter/metaboliter/raw/master/inst/shinyApp/www/gui-logo.png)
-[<img src="https://gitlab.com/metaboliter/metaboliter/raw/master/inst/shinyApp/www/webpage-logo.png" height="60" width="119"/>](https://metaboliter.gitlab.io/metaboliter)
+[<img src="https://gitlab.com/metaboliter/metaboliter/raw/master/inst/shinyApp/www/app-logo.png" height="90" width="179"/>](https://gitlab.com/metaboliter/metaboliter/raw/master/inst/shinyApp/www/app-logo.png)
+[<img src="https://gitlab.com/metaboliter/metaboliter/raw/master/inst/shinyApp/www/webpage-logo.png" height="90" width="179"/>](https://metaboliter.gitlab.io/metaboliter)
 
 
 ## Installation
----
-```
+
+```r
 # Install from CRAN
 install.packages("metaboliteR")
 
@@ -33,13 +33,13 @@ Run the following code:
 `remotes::install_local(dependencies = TRUE)`
 
 ## Quick Guide
----
 
-<img src="https://gitlab.com/metaboliter/metaboliter/raw/master/inst/shinyApp/www/Homepage.jpg" height="400" width="300"/>
+
+<img src="https://gitlab.com/metaboliter/metaboliter/raw/master/inst/shinyApp/www/Homepage.jpg" height="600" width="450"/>
 
 
 ## References
----
+
 
 
 
