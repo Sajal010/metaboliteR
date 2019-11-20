@@ -23,7 +23,7 @@ shinyServer(function(input, output, session) {
         main_columns <- main_columns[!main_columns %in% as.numeric(unlist(strsplit(input$ignore_column, ",")))] # remove ignore by col number
         if(input$scale=='PQN'){
         a<-scale_data(original_data()[, main_columns],"PQN")
-        b<-as.data.frame(t(a$newXtrain))
+        b<-as.data.frame(a$newXtrain)
         }
         else
         apply(original_data()[, main_columns], 2,function (y) scale_data(y,input$scale))
