@@ -151,6 +151,7 @@ plot.MPPCA_score <- function(x, x_axis_PC, y_axis_PC, clustering, labels, conf_l
         }
       }
     }
+    invisible(t(x$score))
   }
   else
     print("Something Wrong with Score Plot!")

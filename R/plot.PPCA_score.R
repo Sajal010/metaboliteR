@@ -113,6 +113,7 @@ plot.PPCA_score <- function(x, x_axis_PC, y_axis_PC, labels, conf_level = 0.95, 
         }
       }
     }
+    invisible(t(x$score))
   }
   else
     print("Something Wrong with Score Plot!")
