@@ -386,9 +386,21 @@ shinyUI(ui = tagList(
                               mainPanel(width = 9,
                                 tabsetPanel(id = "analytics_mix_plot_tabs",
                                   tabPanel("Description", value = "MPPCA_description",
-                                           column(12, align="center",
-                                                  h2(strong("MPPCA is bla bla bla")),
-                                           ),
+                                           br(),
+                                           bsCollapse(id = "MPPCA_desc", open = "MPPCA Usage Guide",
+                                                      bsCollapsePanel("MPPCA Usage Guide",
+
+                                                                      includeHTML("MPPCA_desc_ug.html"),
+                                                                      style = "primary"),
+                                                      bsCollapsePanel("MPPCA Conceptual Explanation",
+
+                                                                      # includeHTML("MPPCA_desc_ce.html"),
+                                                                      style = "info"),
+                                                      bsCollapsePanel("MPPCA Technical Details",
+
+                                                                      # includeHTML("MPPCA_desc_td.html"),
+                                                                      style = "info")
+                                           )
                                   ),
 
 
