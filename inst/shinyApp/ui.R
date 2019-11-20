@@ -22,7 +22,7 @@ shinyUI(ui = tagList(
              column(12, align="center",
                     # img(src='logo.png', align = "right", height=120, width=100),
                     h2(strong("Welcome to the Shiny App for Analysing Metabolomic Data Using R")),
-                    tags$img(src = "Homepage.jpg",height=627,width=400),
+                    tags$img(src = "Homepage.jpg",height=700,width=550),
                     h4(strong("Note: For more help on usage, please look into the 'Guide' tab and 'Vignette' for package."))
              )
     ),
@@ -46,7 +46,6 @@ shinyUI(ui = tagList(
     # Data --------------------------------------------------------------------
     tabPanel("Data",
              sidebarPanel(width = 3,
-
                           tabsetPanel(id = "data_type",
 
                             # PPCA data inputs
@@ -80,13 +79,14 @@ shinyUI(ui = tagList(
 
 
                                      radioButtons(inputId = 'scale', label = NULL,
-                                                  choiceNames =  c("None", "Auto Scale \\(\\quad\\) \\(\\frac{x-\\mu}{\\sigma}\\)",
+                                                  choiceNames =  c("None", 'PQN Scale',
+                                                                   "Auto Scale \\(\\quad\\) \\(\\frac{x-\\mu}{\\sigma}\\)",
                                                                    "Pareto Scale \\(\\space\\) \\(\\frac{x-\\mu}{\\sqrt{\\sigma}}\\)",
                                                                    "Range Scale \\(\\space\\) \\(\\frac{x-\\mu}{x_{max} - x_{min}}\\)",
                                                                    "Vast Scale \\(\\quad\\) \\(\\frac{x-\\mu}{\\sigma}(\\frac{\\mu}{\\sigma}\\))"),
-                                                  choiceValues = c('none', 'autoscale', 'paretoscale', 'rangescale', 'vastscale'),
+                                                  choiceValues = c('none', 'PQN', 'autoscale', 'paretoscale', 'rangescale', 'vastscale'),
                                                   selected = 'none'),
-                                     div(helpText("*μ is the column mean observation while σ is the standard deviation"), style = "font-size:80%"),
+                                     div(helpText("*μ is the column mean value while σ is the standard deviation"), style = "font-size:80%"),
 
                                      tags$hr(),
                             ),
