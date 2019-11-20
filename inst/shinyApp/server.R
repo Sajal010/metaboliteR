@@ -29,7 +29,7 @@ shinyServer(function(input, output, session) {
     output$main_data_table <- renderDataTable({ # Render Table
         if(is.null(main_data())){return ()}
         # head(main_data(), input$lab_slider)
-       main_data()
+        main_data()
     }, options = list(pageLength=10))
 
     main_file_name <- reactive({ # Obtain file name
@@ -124,6 +124,7 @@ shinyServer(function(input, output, session) {
 
     # Check if covariates data are selected
     cov_column_check <- reactive(input$cov_slider[2])
+
     observe(
         if(cov_column_check() == 0) {
             updateCheckboxInput(session, "covariates_check", value = FALSE)
@@ -181,18 +182,56 @@ shinyServer(function(input, output, session) {
                          }
                      })
 
+                     output$dl_ppca_score_btn <- downloadHandler(
+                         filename = "PPCA_score.csv",
+                         content = function(file) {
+                             if(is.null(labels_data())) {
+                                 score_data <- plot(PPCA_object$score,
+                                                    x_axis_PC = input$x_PC, y_axis_PC = input$y_PC, conf_level = input$post_int)
+                             }
+                             else {
+                                 score_data <- plot(PPCA_object$score, labels = unlist(labels_data()),
+                                                    x_axis_PC = input$x_PC, y_axis_PC = input$y_PC, conf_level = input$post_int)
+                             }
+                             write.table(score_data, file = file, sep = ",", row.names = FALSE)
+                         }
+                     )
+                     enable('dl_ppca_score_btn')
+
                      output$PPCA_plot_loadings <- renderPlot({
                          plot(PPCA_object$loadings, analysis = FALSE, x_axis_PC = input$x_PC, y_axis_PC = input$y_PC)
                      })
+
+                     output$dl_ppca_loadings_btn <- downloadHandler(
+                         filename = "PPCA_loadings.csv",
+                         content = function(file) {
+                             loadings_data <- plot(PPCA_object$loadings, analysis = FALSE, x_axis_PC = input$x_PC, y_axis_PC = input$y_PC)
+                             write.table(loadings_data, file = file, sep = ",", col.names = NA)
+                         }
+                     )
+                     enable('dl_ppca_loadings_btn')
 
                      output$PPCA_plot_loadings_analysis <- renderPlot({
                          plot(PPCA_object$loadings, analysis = TRUE, PC=input$main_plot_PC, conf_level=input$conf_int, n=input$n_main)
                      })
 
+                     output$dl_ppca_loadings_analysis_btn <- downloadHandler(
+                         filename = "PPCA_loadings_analysis.csv",
+                         content = function(file) {
+                             loadings__analysis_data <- plot(PPCA_object$loadings, analysis = TRUE, PC=input$main_plot_PC, conf_level=input$conf_int, n=input$n_main)
+                             write.table(loadings__analysis_data, file = file, sep = ",", col.names = NA)
+                         }
+                     )
+                     enable('dl_ppca_loadings_analysis_btn')
+
                      if(!is.null(PPCA_object$influence_report)) {
+                         showTab(inputId = "analytics_plot_tabs", target = "influence_PPCA_plot")
                          output$PPCA_influence_report <- renderPlot({
-                             plot(PPCA_object$influence_report, PC=input$main_plot_PC)
+                             plot(PPCA_object$influence_report, PC=input$main_plot_estPC)
                          })
+                     }
+                     else {
+                         hideTab(inputId = "analytics_plot_tabs", target = "influence_PPCA_plot")
                      }
 
                      output$PPCA_plot_bic <- renderPlot({
@@ -257,6 +296,8 @@ shinyServer(function(input, output, session) {
                          }
                      )
 
+
+
                      on.exit(removeNotification("ppca_progress"), add = TRUE)
 
                      # Switches to Score plot if User is in Description when model has finished running.
@@ -278,10 +319,11 @@ shinyServer(function(input, output, session) {
                                       closeButton = FALSE, type = "message")
 
                      MPPCA_object <- MPPCA(main_data(),
-                                          q_min = input$PC_mix_slider[1], q_max = input$PC_mix_slider[2],
-                                          g_min = input$group_mix_slider[1], g_max = input$group_mix_slider[2],
-                                          B=input$bootstrap_mix_n_slider, eps = input$epsilon_mix)
+                                           q_min = input$PC_mix_slider[1], q_max = input$PC_mix_slider[2],
+                                           g_min = input$group_mix_slider[1], g_max = input$group_mix_slider[2],
+                                           B=input$bootstrap_mix_n_slider, eps = input$epsilon_mix)
 
+                     # MPPCA score plot
                      output$MPPCA_plot_score <- renderPlot({
                          if(is.null(labels_data())) {
                              plot(MPPCA_object$score, x_axis_PC = input$x_mix_PC, y_axis_PC = input$y_mix_PC,
@@ -293,16 +335,51 @@ shinyServer(function(input, output, session) {
                                   conf_level = input$post_mix_int)
                          }
 
-                     })
+                     }, height = ceiling(MPPCA_object$optimal_g/2)*400)
+                     output$dl_mppca_score_btn <- downloadHandler(
+                         filename = "MPPCA_score.csv",
+                         content = function(file) {
+                             if(is.null(labels_data())) {
+                                 mppca_score_data <- plot(MPPCA_object$score, x_axis_PC = input$x_mix_PC, y_axis_PC = input$y_mix_PC,
+                                                          conf_level = input$post_mix_int)
+                             }
+                             else {
+                                 mppca_score_data <- plot(MPPCA_object$score, x_axis_PC = input$x_mix_PC, y_axis_PC = input$y_mix_PC,
+                                                          clustering = MPPCA_object$clustering, labels = labels_data(),
+                                                          conf_level = input$post_mix_int)
+                             }
+                             write.table(mppca_score_data, file = file, sep = ",", row.names = FALSE)
+                         }
+                     )
+                     enable('dl_mppca_score_btn')
 
+                     # MPPCA loadings plot
                      output$MPPCA_plot_loadings <- renderPlot({
                          plot(MPPCA_object$loadings, group = input$group_mix, analysis = FALSE)
                      })
+                     output$dl_mppca_loadings_btn <- downloadHandler(
+                         filename = function(){paste0("MPPCA_Group", input$group_mix, "_loadings.csv")}, #function needed to make it reactive
+                         content = function(file) {
+                             mppca_loadings_data <- plot(MPPCA_object$loadings, group = input$group_mix, analysis = FALSE)
+                             write.table(mppca_loadings_data, file = file, sep = ",", col.names = NA)
+                         }
+                     )
+                     enable('dl_mppca_loadings_btn')
 
+                     # MPPCA loadings analysis plot
                      output$MPPCA_plot_loadings_analysis <- renderPlot({
                          plot(MPPCA_object$loadings, group = input$group_mix, analysis = TRUE,
                               PC=input$analysis_mix_plot_PC, conf_level=input$conf_mix_int, n=input$n_mix_main)
                      })
+                     output$dl_mppca_loadings_analysis_btn <- downloadHandler(
+                         filename = "MPPCA_loadings_analysis.csv",
+                         content = function(file) {
+                             mppca_loadings__analysis_data <- plot(MPPCA_object$loadings, group = input$group_mix, analysis = TRUE,
+                                                                   PC=input$analysis_mix_plot_PC, conf_level=input$conf_mix_int, n=input$n_mix_main)
+                             write.table(mppca_loadings__analysis_data, file = file, sep = ",", col.names = NA)
+                         }
+                     )
+                     enable('dl_mppca_loadings_analysis_btn')
 
                      # output$MPPCA_contin_table <- renderPrint({
                      #     table(unlist(MPPCA_object$groupings), unlist(labels_data()), dnn = c("Predicted","Actual"))
@@ -323,7 +400,7 @@ shinyServer(function(input, output, session) {
                      else{ # Different PC
                          output$optimal_mix_q <- renderText(paste("Optimal: PC =", MPPCA_object$optimal_q))
                          # if(input$choose_q == TRUE) {
-                             PC_mix_max_slider <- MPPCA_object$optimal_q
+                         PC_mix_max_slider <- MPPCA_object$optimal_q
                          # }
                          # else {
                          #     PC_mix_max_slider <- PC_mix_val[2]
@@ -338,7 +415,7 @@ shinyServer(function(input, output, session) {
                      else{ # Different PC
                          output$optimal_mix_g <- renderText(paste("Group =", MPPCA_object$optimal_g))
                          # if(input$choose_q == TRUE) {
-                             group_mix_max_slider <- MPPCA_object$optimal_g
+                         group_mix_max_slider <- MPPCA_object$optimal_g
                          # }
                          # else {
                          #     group_mix_max_slider <- group_mix_val[2]
@@ -354,8 +431,8 @@ shinyServer(function(input, output, session) {
 
                      updateSliderInput(session, "analysis_mix_plot_PC", value = PC_mix_val[1],
                                        min = PC_mix_val[1], max = PC_mix_max_slider)
-                     updateSliderInput(session, "group_mix", value = PC_mix_val[1],
-                                       min = group_mix_val[1], max = group_mix_val[2])
+                     updateSliderInput(session, "group_mix", value = group_mix_val[1],
+                                       min = group_mix_val[1], max = group_mix_max_slider)
 
 
                      on.exit(removeNotification("mppca_progress"), add = TRUE)

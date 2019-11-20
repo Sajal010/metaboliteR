@@ -29,69 +29,112 @@ shinyUI(ui = tagList(
 
 
 
+    # Design -----------------------------------------------------
+    tabPanel("Design",
+             sidebarPanel(width = 3,
+                          "METSIZER PLACEHOLDER"
+             ),
+
+             mainPanel(width = 9,
+                       tabsetPanel(
+                         tabPanel("METSIZER plots placeholder")
+                       )
+             ),
+    ),
+
+
     # Data --------------------------------------------------------------------
     tabPanel("Data",
              sidebarPanel(width = 3,
 
-               fileInput("main_file", h4("File input:", bsButton("main_data_tooltip", label = "",
-                                                                 icon = icon("question"), size = "extra-small")),
-                         multiple = F, accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"),
-                         placeholder = "Enter Metabolomic Data Here"),
-               bsPopover("main_data_tooltip", title="",
-                         content="Please make sure: rows are samples/observations, columns are spectral bins",
-                         trigger = "hover"),
+                          tabsetPanel(id = "data_type",
 
-               # tags$hr(),
-               h4(helpText("Is there a header in the data?")),
-               checkboxInput(inputId = 'header', label = 'Tick for Yes', value = TRUE),
+                            # PPCA data inputs
+                            tabPanel("PPCA/MPPCA",
+                                     fileInput("main_file", h4("File input:", bsButton("main_data_tooltip", label = "",
+                                                                                       icon = icon("question"), size = "extra-small")),
+                                               multiple = F, accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"),
+                                               placeholder = "Enter Metabolomic Data Here"),
+                                     bsPopover("main_data_tooltip", title="",
+                                               content="Please make sure: rows are samples/observations, columns are spectral bins",
+                                               trigger = "hover"),
 
-               radioButtons(inputId = 'sep', label = h4(helpText("How is the data separated?")),
-                            inline = TRUE, choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
+                                     # tags$hr(),
+                                     h4(helpText("Is there a header in the data?")),
+                                     checkboxInput(inputId = 'header', label = 'Tick for Yes', value = TRUE),
 
-               sliderInput("cov_slider", h4("Covariates Columns:"), 0, 10, c(0,0)),
-               helpText("When covariates are selected, they will appear in the 'Covariates Data' tab"),
-               sliderInput("label_slider", h4("Group Labels Columns:"), 0, 10, 0),
-               helpText("When group labels are selected, they will appear in the 'Group Labels' tab"),
-               textInput("ignore_column", h4("Columns Ignored from Main Data:"), "", placeholder="Column number/names (e.g: 2,3,5 or 9.98,9.94,9.86)"),
+                                     radioButtons(inputId = 'sep', label = h4(helpText("How is the data separated?")),
+                                                  inline = TRUE, choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
 
-               h4(helpText("Enter Desired Scaling:", bsButton("scale_type_tooltip", label = "",
-                                                              icon = icon("question"), size = "extra-small"))),
-               bsPopover("scale_type_tooltip", title="Types of Scaling",
-                         content="Choosing any scale will pre-process the data by the given formula. Further details on Guide Tab.",
-                         trigger = "hover"),
+                                     sliderInput("cov_slider", h4("Covariates Columns:"), 0, 10, c(0,0)),
+                                     helpText("When covariates are selected, they will appear in the 'Covariates Data' tab"),
+                                     sliderInput("label_slider", h4("Group Labels Columns:"), 0, 10, 0),
+                                     helpText("When group labels are selected, they will appear in the 'Group Labels' tab"),
+                                     textInput("ignore_column", h4("Columns Ignored from Main Data:"), "", placeholder="Column number/names (e.g: 2,3,5 or 9.98,9.94,9.86)"),
+
+                                     h4(helpText("Enter Desired Scaling:", bsButton("scale_type_tooltip", label = "",
+                                                                                    icon = icon("question"), size = "extra-small"))),
+                                     bsPopover("scale_type_tooltip", title="Types of Scaling",
+                                               content="Choosing any scale will pre-process the data by the given formula. Further details on Guide Tab.",
+                                               trigger = "hover"),
 
 
-               radioButtons(inputId = 'scale', label = NULL,
-                            choiceNames =  c("None", "Auto Scale \\(\\quad\\) \\(\\frac{x-\\mu}{\\sigma}\\)",
-                                             "Pareto Scale \\(\\space\\) \\(\\frac{x-\\mu}{\\sqrt{\\sigma}}\\)",
-                                             "Range Scale \\(\\space\\) \\(\\frac{x-\\mu}{x_{max} - x_{min}}\\)",
-                                             "Vast Scale \\(\\quad\\) \\(\\frac{x-\\mu}{\\sigma}(\\frac{\\mu}{\\sigma}\\))"),
-                            choiceValues = c('none', 'autoscale', 'paretoscale', 'rangescale', 'vastscale'),
-                            selected = 'none'),
-               div(helpText("*μ is the column mean observation while σ is the standard deviation"), style = "font-size:80%"),
+                                     radioButtons(inputId = 'scale', label = NULL,
+                                                  choiceNames =  c("None", "Auto Scale \\(\\quad\\) \\(\\frac{x-\\mu}{\\sigma}\\)",
+                                                                   "Pareto Scale \\(\\space\\) \\(\\frac{x-\\mu}{\\sqrt{\\sigma}}\\)",
+                                                                   "Range Scale \\(\\space\\) \\(\\frac{x-\\mu}{x_{max} - x_{min}}\\)",
+                                                                   "Vast Scale \\(\\quad\\) \\(\\frac{x-\\mu}{\\sigma}(\\frac{\\mu}{\\sigma}\\))"),
+                                                  choiceValues = c('none', 'autoscale', 'paretoscale', 'rangescale', 'vastscale'),
+                                                  selected = 'none'),
+                                     div(helpText("*μ is the column mean observation while σ is the standard deviation"), style = "font-size:80%"),
 
-               tags$hr(),
+                                     tags$hr(),
+                            ),
+                            tabPanel("DPPCA",)
+
+                          )
 
              ),
              mainPanel(width = 9,
-               tabsetPanel(
-                 tabPanel(span("Main Data", title="Data from NMR or Mass Spectroscopy (MS)"),
-                          value = 'main',
-                          strong(h3(textOutput("main_file_name"))),
-                          dataTableOutput("main_data_table"),
-                 ),
-                 tabPanel(span("Covariates Data", title="Sample attributes (eg: weight, gender, regions, etc)"),
-                          value = 'covariates',
-                          h3(textOutput("covariates_file_name")),
-                          dataTableOutput("covariates_data_table")
-                 ),
-                 tabPanel(span("Group Labels", title="This data is used for colours in plots (eg: Treatment group vs Control group)"),
-                          value = 'labels',
-                          h3(textOutput("labels_file_name")),
-                          dataTableOutput("labels_data_table")
-                 ),
-                 id = "data_tabs"
-               )
+                       conditionalPanel(condition="input.data_type=='PPCA/MPPCA'",
+                                        tabsetPanel(id = "ppca_data_tabs",
+                                                    tabPanel(span("Main Data", title="Data from NMR or Mass Spectroscopy (MS)"),
+                                                             value = 'main',
+                                                             strong(h3(textOutput("main_file_name"))),
+                                                             dataTableOutput("main_data_table"),
+                                                    ),
+                                                    tabPanel(span("Covariates Data", title="Sample attributes (eg: weight, gender, regions, etc)"),
+                                                             value = 'covariates',
+                                                             h3(textOutput("covariates_file_name")),
+                                                             dataTableOutput("covariates_data_table")
+                                                    ),
+                                                    tabPanel(span("Group Labels", title="This data is used for colours in plots (eg: Treatment group vs Control group)"),
+                                                             value = 'labels',
+                                                             h3(textOutput("labels_file_name")),
+                                                             dataTableOutput("labels_data_table")
+                                                    )
+                                        )
+                       ),
+                       conditionalPanel(condition="input.data_type=='DPPCA'",
+                                        tabsetPanel(id = "dppca_data_tabs",
+                                                    tabPanel(span("Main Data", title="Data from NMR or Mass Spectroscopy (MS)"),
+                                                             value = 'dppca_main',
+                                                             # strong(h3(textOutput("main_file_name"))),
+                                                             # dataTableOutput("main_data_table"),
+                                                    ),
+                                                    tabPanel(span("Covariates Data", title="Sample attributes (eg: weight, gender, regions, etc)"),
+                                                             value = 'dppca_covariates',
+                                                             # h3(textOutput("covariates_file_name")),
+                                                             # dataTableOutput("covariates_data_table")
+                                                    ),
+                                                    tabPanel(span("Group Labels", title="This data is used for colours in plots (eg: Treatment group vs Control group)"),
+                                                             value = 'dppca_labels',
+                                                             # h3(textOutput("labels_file_name")),
+                                                             # dataTableOutput("labels_data_table")
+                                                    )
+                                        )
+                       ),
+
 
              )
     ),
@@ -101,7 +144,7 @@ shinyUI(ui = tagList(
     # Analytics ---------------------------------------------------------------
     tabPanel("Analytics",
              sidebarPanel(width = 3,
-               tabsetPanel(
+               tabsetPanel(id = "analytics_method_tab",
                  # PPCA plot controls
                  tabPanel(div("PPCA",id="PPCA_tooltip"), value = "PPCA_tab",
                           bsTooltip("PPCA_tooltip", title="Simple PPCA", trigger = "hover"),
@@ -114,8 +157,8 @@ shinyUI(ui = tagList(
                                            sliderInput("bootstrap_n_slider", h4("Numbers of Bootstrap:"), 2, 100, 5),
                                            bsTooltip("bootstrap_n_slider", title="Higher Bootstrap, Better Uncertainty but Longer Wait Time", trigger = "hover"),
 
-                                           h4("Do you want to include Covariates?"),
-                                           disabled(checkboxInput(inputId = 'covariates_check', label = span('Tick for Yes', title = "Please make sure covariates data are selected in Data tabs to enable this selection"), value = FALSE)),
+                                           h4("Do you want to include", span("Covariates?", style="color:blue")),
+                                           disabled(checkboxInput(inputId = 'covariates_check', label = span('Tick for Yes', style="color:blue", title = "Please make sure covariates data are selected in Data tabs to enable this selection"), value = FALSE)),
 
                                            radioButtons("choose_q", label = h4("Output Optimize Model?"),
                                                         choiceNames = c("Use Optimal PC", "Use Maximum PC"),
@@ -154,20 +197,29 @@ shinyUI(ui = tagList(
                                            sliderInput("x_PC", h4("X-axis Principal Component:"), min=1, max=10, value=4, step=1, ticks=F),
                                            sliderInput("y_PC", h4("Y-axis Principal Component:"), min=1, max=10, value=4, step=1, ticks=F),
 
+
                                            conditionalPanel(condition="input.analytics_plot_tabs=='score_PPCA_plot'",
                                                             sliderInput("post_int", h4("Posterior Interval:"), min=0.8, max=0.9999, value=0.95, ticks=F),
+                                                            disabled(downloadButton("dl_ppca_score_btn", span("Download", title="Download a Table of All Score Estimates."))),
+                                           ),
 
-
+                                           conditionalPanel(condition="input.analytics_plot_tabs=='loading_PPCA_plot'",
+                                                            disabled(downloadButton("dl_ppca_loadings_btn", span("Download", title="Download a Table of All Loadings Estimates."))),
                                            )
                           ),
 
 
-                          # Loadings Analysis plot
-                          conditionalPanel(condition="input.analytics_plot_tabs=='loading_analysis_PPCA_plot'",
+                          # Loadings Analysis & Influence plot
+                          conditionalPanel(condition="input.analytics_plot_tabs=='loading_analysis_PPCA_plot' || input.analytics_plot_tabs=='influence_PPCA_plot'",
                                            sliderInput("main_plot_PC", h4("Principal Component for Plot:"), min=1, max=10, value=1, step=1, ticks=F),
                                            sliderInput("conf_int", h4("Confidence Interval:"), min=0.8, max=0.9999, value=0.95, ticks=F),
-                                           sliderInput("n_main", h5("Numbers of Significant Bin for Main Plot"), min=1, max=20, value=5, step=1, ticks=F),
-                                           downloadButton("dl_significant_btn1", span("Download", title="Download a Table of All Significant Spectral Bins Names"))
+
+                                           conditionalPanel(condition="input.analytics_plot_tabs=='loading_analysis_PPCA_plot'",
+                                                            sliderInput("n_main", h5("Numbers of Significant Bin for Main Plot"), min=1, max=20, value=5, step=1, ticks=F),
+                                                            disabled(downloadButton("dl_ppca_loadings_analysis_btn", span("Download", title="Download a table of data used to produced the graph."))),
+
+                                                            # downloadButton("dl_significant_btn1", span("Download", title="Download a Table of All Significant Spectral Bins Names"))
+                                           )
                           ),
 
                           # Significant bins
@@ -236,7 +288,7 @@ shinyUI(ui = tagList(
                                            sliderInput("x_mix_PC", h4("X-axis Principal Component:"), min=1, max=10, value=4, step=1, ticks=F),
                                            sliderInput("y_mix_PC", h4("Y-axis Principal Component:"), min=1, max=10, value=4, step=1, ticks=F),
                                            sliderInput("post_mix_int", h4("Posterior Interval:"), min=0.8, max=0.9999, value=0.95, ticks=F),
-
+                                           disabled(downloadButton("dl_mppca_score_btn", span("Download", title="Download a Table of All Score Estimates."))),
 
 
                           ),
@@ -248,7 +300,13 @@ shinyUI(ui = tagList(
                                            conditionalPanel(condition="input.analytics_mix_plot_tabs=='loading_analysis_MPPCA_plot'",
                                                             sliderInput("analysis_mix_plot_PC", h4("Principal Component for Plot:"), min=1, max=10, value=1, step=1, ticks=F),
                                                             sliderInput("conf_mix_int", h4("Confidence Interval:"), min=0.8, max=0.9999, value=0.95, ticks=F),
-                                                            sliderInput("n_mix_main", h5("Numbers of Significant Bin for Main Plot"), min=1, max=20, value=5, step=1, ticks=F)
+                                                            sliderInput("n_mix_main", h5("Numbers of Significant Bin for Main Plot"), min=1, max=20, value=5, step=1, ticks=F),
+                                                            disabled(downloadButton("dl_mppca_loadings_analysis_btn", span("Download", title="Download a table of data used to produced the graph."))),
+
+                                           ),
+
+                                           conditionalPanel(condition="input.analytics_mix_plot_tabs=='loading_MPPCA_plot'",
+                                                            disabled(downloadButton("dl_mppca_loadings_btn", span("Download", title="Download a Table of All Loadings Estimates."))),
 
                                            )
                           ),
@@ -258,8 +316,8 @@ shinyUI(ui = tagList(
                  # DPPCA plot controls
                  tabPanel(tags$div("DPPCA", title="Dynamic PPCA"),
                           value = "DPPCA_tab",
-                          "Placeholder for Dynamic PPCA"),
-                 id = "analytics_method_tab"
+                          "Placeholder for Dynamic PPCA")
+
                ),
 
              ),
@@ -267,7 +325,13 @@ shinyUI(ui = tagList(
              # PPCA Plots
              conditionalPanel(condition="input.analytics_method_tab=='PPCA_tab'",
                               mainPanel(width = 9,
-                                tabsetPanel(
+
+                                        # Style for influence tab
+                                        tags$style(HTML("
+                                        .tabbable > .nav > li > a[data-value='influence_PPCA_plot'] {color:blue}
+                                                        ")),
+
+                                tabsetPanel(id = "analytics_plot_tabs",
                                   tabPanel("Description", value = "PPCA_description",
                                            br(),
                                            bsCollapse(id = "PPCA_desc", open = "PPCA/PPCCA Usage Guide",
@@ -295,6 +359,8 @@ shinyUI(ui = tagList(
                                   ),
                                   tabPanel("Loadings Analysis Plot", value = "loading_analysis_PPCA_plot",
                                            plotOutput("PPCA_plot_loadings_analysis"),
+                                  ),
+                                  tabPanel("Loadings Influence Plot", value = "influence_PPCA_plot",
                                            plotOutput("PPCA_influence_report"),
                                   ),
 
@@ -309,17 +375,16 @@ shinyUI(ui = tagList(
 
                                   tabPanel("Algorithm Covergence Plot", value = "ll_PPCA_plot",
                                            plotOutput("PPCA_plot_ll_conv"),
-                                  ),
-
-                                  id = "analytics_plot_tabs"
+                                  )
                                 )
                               )
              ),
 
+
              # MPCCA plots
              conditionalPanel(condition="input.analytics_method_tab=='MPPCA_tab'",
                               mainPanel(width = 9,
-                                tabsetPanel(
+                                tabsetPanel(id = "analytics_mix_plot_tabs",
                                   tabPanel("Description", value = "MPPCA_description",
                                            column(12, align="center",
                                                   h2(strong("MPPCA is bla bla bla")),
@@ -350,10 +415,7 @@ shinyUI(ui = tagList(
 
                                   tabPanel("BIC Plot", value = "BIC_MPPCA_plot",
                                            plotOutput("MPPCA_plot_BIC")
-                                  ),
-
-                                  id = "analytics_mix_plot_tabs"
-
+                                  )
                                 )
                               )
              ),
