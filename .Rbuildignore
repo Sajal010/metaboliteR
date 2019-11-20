@@ -4,3 +4,4 @@
 ^\.gitlab-ci\.yml$
 ^doc$
 ^Meta$
+^vignettes/.+$
