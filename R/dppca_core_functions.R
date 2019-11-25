@@ -346,9 +346,10 @@ rotate_W_U = function(W_chain,U_chain, W_reference){
   #rotation:
   for(i in 1:chain_length){
     for(m in 1:M){
-      proc = vegan::procrustes(W_reference[[m]], W_chain[[i]][[m]], translation=FALSE, dilation=FALSE)
-      W_rotated[[i]][[m]] <- proc$Yrot;
-      U_rotated[[i]][[m]] <- proc$rotation%*%(U_chain[[i]][[m]])
+      proc = MCMCpack::procrustes(W_chain[[i]][[m]],W_reference[[m]], translation=FALSE, dilation=FALSE)
+      W_rotated[[i]][[m]] <- proc$X.new
+      aux = c(t(proc$R)%*%(U_chain[[i]][[m]]))
+      U_rotated[[i]][[m]] <- matrix(aux,ncol =q, byrow = FALSE)
     }
   }
 
@@ -356,7 +357,12 @@ rotate_W_U = function(W_chain,U_chain, W_reference){
 
 }
 
-posterior_U = function(m, rotated_U){
+posterior_U = function(m, rotated_U, post_burn_in, post_thin){
+
+  #further burn in and thinning applied
+
+  rotated_U = tail(rotated_U, -post_burn_in)
+  rotated_U = rotated_U[ c( TRUE,rep(FALSE, post_thin)) ]
 
   U_m = lapply(rotated_U, "[[", m)
   U_post = apply(simplify2array(U_m), c(1,2), function(x) quantile(x, 0.5))
@@ -364,7 +370,12 @@ posterior_U = function(m, rotated_U){
   return(list(U_post = U_post))
 }
 
-posterior_W = function(m, rotated_W){
+posterior_W = function(m, rotated_W, post_burn_in, post_thin){
+
+  #further burn in and thinning applied
+
+  rotated_W = tail(rotated_W, -post_burn_in)
+  rotated_W = rotated_W[ c( TRUE,rep(FALSE, post_thin)) ]
 
   W_m = lapply(rotated_W, "[[", m)
   W_post = apply(simplify2array(W_m), c(1,2), function(x) quantile(x, 0.5))
@@ -374,7 +385,7 @@ posterior_W = function(m, rotated_W){
 
 rotate_post_scores=function(U_post, W_post){
   M = length(U_post)
-  q = dim(U_post[[1]])[1]; n = dim(U_post[[1]])[2];
+  q = dim(U_post[[1]])[2]; n = dim(U_post[[1]])[1];
   U_post_rot = list(rep(matrix(NA, nrow = q, ncol = n),M))
 
   for(m in 1:M){
@@ -383,7 +394,7 @@ rotate_post_scores=function(U_post, W_post){
       U_post_rot[[m]] <- t(U_post[[1]])
     } else {
       res <- vegan::procrustes(W_post[[m]], template, translation=FALSE, dilation=FALSE)
-      U_post_rot[[m]] <- t(t(res$rotation)%*%U_post[[m]])
+      U_post_rot[[m]] <- t(res$rotation)%*%t(U_post[[m]])
     }
   }
   return(list(U_post_rot = U_post_rot))

@@ -119,9 +119,10 @@ mppca$sigma2       #Variance of the error component
 ```
 
 
-
-
 ## DPPCA: Dynamic Probabilistic Principal Components 
+
+When a longitudinal metabolomics study is carried, metabolites are measured in different time points. In this context, the reduction of dimensionality is necessary since the number of covariates tends to be much larger than the number of observations in these studies. In additional, in longitudinal studies it is also necessary to take into account dependence between repeated measures of the same individual. The DPPCA model developed in @dppca properly models this correlation at the same time that it provides dimensionality reduction. The Bayesian approach is taken to estimate the DPPCA model using MCMC techniques, hence specification of the hyperparameters of prior distributions is necessary, as well as convergence diagnostics of the chain.
+
 
 
 ## MetSizeR
