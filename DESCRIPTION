@@ -26,6 +26,7 @@ Imports:
     mclust,
     msm,
     mvtnorm,
+    KODAMA,
     stats,
     utils,
     vegan

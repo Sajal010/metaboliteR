@@ -57,7 +57,7 @@ plot.MPPCA_loadings <- function(x, group, analysis = FALSE, PC=1, n=5, conf_leve
             return(result)
           }
 
-          all = sapply(X = seq(1,q,1), FUN = get_table, est = mppca_loadings$loadings[[group_n]], lower = lower_CI, upper = upper_CI)
+          all = lapply(X = seq(1,q,1), FUN = get_table, est = mppca_loadings$loadings[[group_n]], lower = lower_CI, upper = upper_CI)
 
           significant_x = lapply(all, "[", i =, j = 1)
           significant_x = lapply(significant_x, as.vector)
@@ -85,7 +85,10 @@ plot.MPPCA_loadings <- function(x, group, analysis = FALSE, PC=1, n=5, conf_leve
           upper_CI_ylim <- mppca_loadings$loadings[[group_n]] + (qnorm(0.9999+(1-0.9999)/2)*mppca_loadings$loadings_sd[[group_n]])/sqrt(number)
           top_upper_CI_ylim <- upper_CI_ylim[rownames(upper_CI_ylim) %in% top_spectral_bins, PC] # Extract top bins values
 
-          barplot(top_data, col='red', border=FALSE, ylim=c(min(c(top_data,top_lower_CI_ylim,0)), max(c(top_data,top_upper_CI_ylim,0))),
+          plot_lower_ylim <- min(c(min(top_lower_CI_ylim) + .2*min(top_lower_CI_ylim), 0)) # min between lowest CI or 0
+          plot_upper_ylim <- max(c(max(top_upper_CI_ylim) + .2*max(top_upper_CI_ylim), 0)) # max between highest CI or 0
+
+          barplot(top_data, col='red', border=FALSE, ylim=c(plot_lower_ylim, plot_upper_ylim),
                   main=paste0('Group', group_n, ' Spectral Regions with Loadings \nSignificantly Different from 0'),
                   xlab='Spectral Regions', ylab=paste0('PC',PC,' Loadings'))
           grid(nx=0, ny=NULL)
@@ -140,7 +143,7 @@ plot.MPPCA_loadings <- function(x, group, analysis = FALSE, PC=1, n=5, conf_leve
             return(result)
           }
 
-          all = sapply(X = seq(1,q,1), FUN = get_table, est = mppca_loadings$loadings[[group_n]], lower = lower_CI, upper = upper_CI)
+          all = lapply(X = seq(1,q,1), FUN = get_table, est = mppca_loadings$loadings[[group_n]], lower = lower_CI, upper = upper_CI)
 
           significant_x = lapply(all, "[", i =, j = 1)
           significant_x = lapply(significant_x, as.vector)
@@ -168,7 +171,10 @@ plot.MPPCA_loadings <- function(x, group, analysis = FALSE, PC=1, n=5, conf_leve
           upper_CI_ylim <- mppca_loadings$loadings[[group_n]] + (qnorm(0.9999+(1-0.9999)/2)*mppca_loadings$loadings_sd[[group_n]])/sqrt(number)
           top_upper_CI_ylim <- upper_CI_ylim[rownames(upper_CI_ylim) %in% top_spectral_bins, PC] # Extract top bins values
 
-          barplot(top_data, col='red', border=FALSE, ylim=c(min(c(top_data,top_lower_CI_ylim,0)), max(c(top_data,top_upper_CI_ylim,0))),
+          plot_lower_ylim <- min(c(min(top_lower_CI_ylim) + .2*min(top_lower_CI_ylim), 0)) # min between lowest CI or 0
+          plot_upper_ylim <- max(c(max(top_upper_CI_ylim) + .2*max(top_upper_CI_ylim), 0)) # max between highest CI or 0
+
+          barplot(top_data, col='red', border=FALSE, ylim=c(plot_lower_ylim, plot_upper_ylim),
                   main=paste0('Group', group_n, ' Spectral Regions with Loadings \nSignificantly Different from 0'),
                   xlab='Spectral Regions', ylab=paste0('PC',PC,' Loadings'))
           grid(nx=0, ny=NULL)
@@ -220,7 +226,7 @@ plot.MPPCA_loadings <- function(x, group, analysis = FALSE, PC=1, n=5, conf_leve
           return(result)
         }
 
-        all = sapply(X = seq(1,q,1), FUN = get_table, est = mppca_loadings$loadings[[group]], lower = lower_CI, upper = upper_CI)
+        all = lapply(X = seq(1,q,1), FUN = get_table, est = mppca_loadings$loadings[[group]], lower = lower_CI, upper = upper_CI)
 
         significant_x = lapply(all, "[", i =, j = 1)
         significant_x = lapply(significant_x, as.vector)
@@ -248,7 +254,10 @@ plot.MPPCA_loadings <- function(x, group, analysis = FALSE, PC=1, n=5, conf_leve
         upper_CI_ylim <- mppca_loadings$loadings[[group]] + (qnorm(0.9999+(1-0.9999)/2)*mppca_loadings$loadings_sd[[group]])/sqrt(number)
         top_upper_CI_ylim <- upper_CI_ylim[rownames(upper_CI_ylim) %in% top_spectral_bins, PC] # Extract top bins values
 
-        barplot(top_data, col='red', border=FALSE, ylim=c(min(c(top_data,top_lower_CI_ylim,0)), max(c(top_data,top_upper_CI_ylim,0))),
+        plot_lower_ylim <- min(c(min(top_lower_CI_ylim) + .2*min(top_lower_CI_ylim), 0)) # min between lowest CI or 0
+        plot_upper_ylim <- max(c(max(top_upper_CI_ylim) + .2*max(top_upper_CI_ylim), 0)) # max between highest CI or 0
+
+        barplot(top_data, col='red', border=FALSE, ylim=c(plot_lower_ylim, plot_upper_ylim),
                 main=paste0('Group', group, ' Spectral Regions with Loadings \nSignificantly Different from 0'),
                 xlab='Spectral Regions', ylab=paste0('PC',PC,' Loadings'))
         grid(nx=0, ny=NULL)
@@ -270,6 +279,7 @@ plot.MPPCA_loadings <- function(x, group, analysis = FALSE, PC=1, n=5, conf_leve
               },
               labels = paste0("PC", PC_number),
               main = paste0("MPPCA Loadings for Group ", group))
+        invisible(mppca_loadings$loadings[[group]])
       }
       else { # analysis == TRUE, Loadings analysis plot
 
@@ -296,7 +306,7 @@ plot.MPPCA_loadings <- function(x, group, analysis = FALSE, PC=1, n=5, conf_leve
           return(result)
         }
 
-        all = sapply(X = seq(1,q,1), FUN = get_table, est = mppca_loadings$loadings[[group]], lower = lower_CI, upper = upper_CI)
+        all = lapply(X = seq(1,q,1), FUN = get_table, est = mppca_loadings$loadings[[group]], lower = lower_CI, upper = upper_CI)
 
         significant_x = lapply(all, "[", i =, j = 1)
         significant_x = lapply(significant_x, as.vector)
@@ -324,7 +334,10 @@ plot.MPPCA_loadings <- function(x, group, analysis = FALSE, PC=1, n=5, conf_leve
         upper_CI_ylim <- mppca_loadings$loadings[[group]] + (qnorm(0.9999+(1-0.9999)/2)*mppca_loadings$loadings_sd[[group]])/sqrt(number)
         top_upper_CI_ylim <- upper_CI_ylim[rownames(upper_CI_ylim) %in% top_spectral_bins, PC] # Extract top bins values
 
-        barplot(top_data, col='red', border=FALSE, ylim=c(min(c(top_data,top_lower_CI_ylim,0)), max(c(top_data,top_upper_CI_ylim,0))),
+        plot_lower_ylim <- min(c(min(top_lower_CI_ylim) + .2*min(top_lower_CI_ylim), 0)) # min between lowest CI or 0
+        plot_upper_ylim <- max(c(max(top_upper_CI_ylim) + .2*max(top_upper_CI_ylim), 0)) # max between highest CI or 0
+
+        barplot(top_data, col='red', border=FALSE, ylim=c(plot_lower_ylim, plot_upper_ylim),
                 main=paste0('Group', group, ' Spectral Regions with Loadings \nSignificantly Different from 0'),
                 xlab='Spectral Regions', ylab=paste0('PC',PC,' Loadings'))
         grid(nx=0, ny=NULL)
@@ -333,6 +346,12 @@ plot.MPPCA_loadings <- function(x, group, analysis = FALSE, PC=1, n=5, conf_leve
         arrows_x <- seq(1-.275,n*1.2-.275,1.2)
         arrows(x0=arrows_x,y0=top_lower_CI,y1=top_upper_CI,angle=90,code=3,length=0.8/n) # CI Error bars
 
+        outputs <- cbind(top_data,top_lower_CI,top_upper_CI)
+        colnames(outputs) <- c(paste0("Grp", group, "_PC", PC, "_Loads_Est."),
+                               paste0(conf_level*100, "%", "_Lower_CI"),
+                               paste0(conf_level*100, "%", "_Upper_CI")
+        )
+        return(outputs)
       }
     }
   }
