@@ -4,7 +4,8 @@
 \alias{DPPCA}
 \title{Dynamic Probabilistic Principal Components model (DPPCA)}
 \usage{
-DPPCA(q, chain_output, prior_params, burn_in, thin, data_time)
+DPPCA(q, chain_output, prior_params, burn_in, thin, data_time,
+  post_burn_in = 10, post_thin = 5)
 }
 \arguments{
 \item{q}{Number of components.}
@@ -26,6 +27,10 @@ DPPCA(q, chain_output, prior_params, burn_in, thin, data_time)
 
 \item{data_time}{List of M matrixes or data frames containing the observed data for each time point. \cr
 The data frame should contain observations in rows and spectral bins in columns.}
+
+\item{post_burn_in}{further burn-in applied to chains of loadings and scores to calculate posteriors}
+
+\item{post_thin}{further thinning applied to chains of loadings and scores to calculate posteriors}
 }
 \description{
 DPCCA is a model for analysing longitudinal metabolomic data.

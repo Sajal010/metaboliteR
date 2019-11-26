@@ -13,6 +13,7 @@ Encoding: UTF-8
 LazyData: true
 Depends: R (>= 3.5.0)
 Imports: 
+    brms,
     ellipse,
     fastDummies,
     furrr,
@@ -24,10 +25,12 @@ Imports:
     LearnBayes,
     magrittr,
     mclust,
+    MCMCpack,
     msm,
     mvtnorm,
     KODAMA,
     stats,
+    tidyr,
     utils,
     vegan
 RoxygenNote: 6.1.1

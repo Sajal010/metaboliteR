@@ -4,10 +4,12 @@
 \alias{plot.top_loadings}
 \title{Plot top influential loadings by time point}
 \usage{
-\method{plot}{top_loadings}(x, ...)
+\method{plot}{top_loadings}(x, M, ...)
 }
 \arguments{
 \item{x}{object of class top_loadings}
+
+\item{M}{number of time dimension to be plotted}
 
 \item{...}{additional arguments}
 }

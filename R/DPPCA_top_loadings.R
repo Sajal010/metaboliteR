@@ -20,8 +20,6 @@ DPPCA_top_loadings = function(n, PC, W, cred_level = 0.95){
     top_n[,1] = gsub("X", "", as.character(top_n[,1]))
     top_loads[[i]] <- top_n
   }
-
-  return(top_loads)
   class(top_loads) <- "top_loadings"
-
+  return(top_loads)
 }

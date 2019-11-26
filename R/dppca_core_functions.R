@@ -1,10 +1,12 @@
 # DPPCA Method -------------------------------------------------------------
 
-#' @importFrom stats sd rnorm dnorm runif
+#' @importFrom stats sd rnorm dnorm runif quantile
 #' @importFrom msm rtnorm
 #' @importFrom mvtnorm rmvnorm dmvnorm
 #' @importFrom LearnBayes rigamma
-#' @importFrom vegan procrustes
+#' @import brms
+#' @importFrom tidyr gather
+#' @importFrom MCMCpack procrustes
 
 #  Data  -------------------------------------------------------------
 
@@ -393,8 +395,9 @@ rotate_post_scores=function(U_post, W_post){
     if(m==1){
       U_post_rot[[m]] <- t(U_post[[1]])
     } else {
-      res <- vegan::procrustes(W_post[[m]], template, translation=FALSE, dilation=FALSE)
-      U_post_rot[[m]] <- t(res$rotation)%*%t(U_post[[m]])
+      #res <- vegan::procrustes(W_post[[m]], template, translation=FALSE, dilation=FALSE)
+      res <- MCMCpack::procrustes(W_post[[m]], template, translation=FALSE, dilation=FALSE)
+      U_post_rot[[m]] <- t(res$R)%*%t(U_post[[m]])
     }
   }
   return(list(U_post_rot = U_post_rot))
@@ -425,5 +428,124 @@ sig_loadings = function(time, PC, W, cred_level){
   store_sig$upper = as.numeric(as.character(store_sig$upper))
   return(store_sig)
 }
+
+#  Fitting LMMs  -------------------------------------------------------------
+fit_cubic = function(data_met, alpha){
+  model3 <- brms::brm(data = data_met,
+                      family = gaussian,
+                      measurement ~ 1 + time + time2 + time3 + (1 | individual), # random intercept by individual
+                      prior = c(prior_string("normal(0, 10)", class = "Intercept"),  #prior for the intercept
+                                prior_string("normal(0, 1)", class = "b"), #prior for betas
+                                prior_string("cauchy(0, 1)", class = "sd"), #sd of random effects
+                                prior_string("cauchy(0, 1)", class = "sigma")), #overall variability
+                      iter = 10000, warmup = 500, chains = 1, cores = 1, thin = 10,
+                      control = list(adapt_delta = .975, max_treedepth = 20),
+                      seed = 190831, open_progress = FALSE)
+
+  cubic = quantile(model3$fit@sim$samples[[1]][["b_time3"]], c(alpha/2, 1-alpha/2))
+  sig_cube = as.numeric(sign(cubic[1]) == sign(cubic[2]))
+  beta_cube = quantile(model3$fit@sim$samples[[1]][["b_time3"]], 0.5)
+  beta_quad = quantile(model3$fit@sim$samples[[1]][["b_time2"]], 0.5)
+  beta_lin = quantile(model3$fit@sim$samples[[1]][["b_time"]], 0.5)
+  beta0 =  quantile(model3$fit@sim$samples[[1]][["b_Intercept"]], 0.5)
+  return(list(significant = sig_cube,
+              beta_cube = beta_cube,
+              beta_quad = beta_quad,
+              beta_lin = beta_lin,
+              beta0 = beta0))
+}
+
+fit_squared = function(data_met, alpha){
+  model2 <- brms::brm(data = data_met,
+                      family = gaussian,
+                      measurement ~ 1 + time + time2  + (1 | individual), # random intercept by individual
+                      prior = c(prior_string("normal(0, 10)", class = "Intercept"),  #prior for the intercept
+                                prior_string("normal(0, 1)", class = "b"), #prior for betas
+                                prior_string("cauchy(0, 1)", class = "sd"), #sd of random effects
+                                prior_string("cauchy(0, 1)", class = "sigma")), #overall variability
+                      iter = 10000, warmup = 500, chains = 1, cores = 1, thin = 10,
+                      control = list(adapt_delta = .975, max_treedepth = 20),
+                      seed = 190831, open_progress = FALSE)
+
+  quad = quantile(model2$fit@sim$samples[[1]][["b_time2"]], c(alpha/2, 1-alpha/2))
+  sig_quad = as.numeric(sign(quad[1]) == sign(quad[2]))
+
+  beta_quad = quantile(model2$fit@sim$samples[[1]][["b_time2"]], 0.5)
+  beta_lin = quantile(model2$fit@sim$samples[[1]][["b_time"]], 0.5)
+  beta0 =  quantile(model2$fit@sim$samples[[1]][["b_Intercept"]], 0.5)
+
+  return(list(significant = sig_quad,
+              beta_square = beta_quad,
+              beta_lin = beta_lin,
+              beta0 = beta0))
+
+}
+
+fit_linear = function(data_met, alpha){
+  model1 <- brms::brm(data = data_met,
+                      family = gaussian,
+                      measurement ~ 1 + time + (1 | individual), # random intercept by individual
+                      prior = c(prior_string("normal(0, 10)", class = "Intercept"),  #prior for the intercept
+                                prior_string("normal(0, 1)", class = "b"), #prior for betas
+                                prior_string("cauchy(0, 1)", class = "sd"), #sd of random effects
+                                prior_string("cauchy(0, 1)", class = "sigma")), #overall variability
+                      iter = 10000, warmup = 500, chains = 1, cores = 1, thin = 10,
+                      control = list(adapt_delta = .975, max_treedepth = 20),
+                      seed = 190831, open_progress = FALSE)
+
+  lin = quantile(model1$fit@sim$samples[[1]][["b_time"]], c(alpha/2, 1-alpha/2))
+  sig_lin = as.numeric(sign(lin[1]) == sign(lin[2]))
+  beta_lin = quantile(model1$fit@sim$samples[[1]][["b_time"]], 0.5)
+  beta0 =  quantile(model1$fit@sim$samples[[1]][["b_Intercept"]], 0.5)
+
+  return(list(significant = sig_lin,
+              beta_lin = beta_lin,
+              beta0 = beta0))
+
+}
+
+LMMs_data = function(top, data){
+  # this function is to get the original data of the metabolites identifyed as top
+  if(class(top) != "top_loadings"){
+    print("Function expects an object of class top_loadings.")
+  } else {
+
+  bins = lapply(top, "[[", "spectral_bin")
+  bins = unique(unlist(bins))
+
+  K= length(bins) #number of bins identified
+  M = length(data)
+
+  get_series= function(k, data, bins){
+    bin = bins[k]
+    index = which(colnames(data[[1]])==bin)
+    n = nrow(data[[1]])
+    serie_list =  lapply(data, "[",, j = index)
+    series_matrix = t(matrix(unlist(serie_list),ncol = n, byrow = TRUE))
+
+    series_wide = data.frame(series_matrix)
+    series_wide$individual = seq(1,n,1)
+
+    series_long = gather(series_wide, "time", "measurement", "X1":"X8", factor_key=TRUE)
+    series_long$time = gsub("X","", series_long$time)
+    series_long$time = as.numeric(as.character(series_long$time))
+    series_long$time2 = series_long$time^2
+    series_long$time3 = series_long$time^3
+    return(series_long)
+  }
+
+  series = sapply(seq(1,K,1),get_series, data, bins, simplify = FALSE)
+  return(list(series = series, bins = bins))
+  }
+}
+
+
+
+
+
+
+
+
+
 
 
