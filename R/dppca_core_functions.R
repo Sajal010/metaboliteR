@@ -435,7 +435,7 @@ fit_cubic = function(data_met, alpha){
                       family = gaussian,
                       measurement ~ 1 + time + time2 + time3 + (1 | individual), # random intercept by individual
                       prior = c(prior_string("normal(0, 10)", class = "Intercept"),  #prior for the intercept
-                                prior_string("normal(0, 1)", class = "b"), #prior for betas
+                                prior_string("normal(0, 10)", class = "b"), #prior for betas
                                 prior_string("cauchy(0, 1)", class = "sd"), #sd of random effects
                                 prior_string("cauchy(0, 1)", class = "sigma")), #overall variability
                       iter = 10000, warmup = 500, chains = 1, cores = 1, thin = 10,
@@ -456,16 +456,38 @@ fit_cubic = function(data_met, alpha){
 }
 
 fit_squared = function(data_met, alpha){
+
+  beta1_i = rep(NA,n)
+  beta2_i = rep(NA,n)
+  sigma0_i= rep(NA,n)
+  for(i in 1:n){
+    lm = lm(measurement ~ -1 + time + time2,data = subset(data_met, individual ==i))
+    beta1_i[i] = lm$coefficients[1]
+    beta2_i[i] = lm$coefficients[2]
+    sigma0_i[i] = summary(lm)$sigma^2 #random effect
+  }
+
+  beta1_0 = mean(beta1_i)
+  sigma1_0= sd(beta1_i)
+
+  beta2_0 = mean(beta2_i)
+  sigma2_0 = sd(beta2_i)
+
+  stanvar = stanvar(beta1_0 ,"beta1_0") +   stanvar(sigma1_0 ,"sigma1_0") +
+          stanvar(beta2_0, "beta2_0") + stanvar(sigma2_0,"sigma2_0")
+
+
   model2 <- brms::brm(data = data_met,
                       family = gaussian,
                       measurement ~ 1 + time + time2  + (1 | individual), # random intercept by individual
                       prior = c(prior_string("normal(0, 10)", class = "Intercept"),  #prior for the intercept
-                                prior_string("normal(0, 1)", class = "b"), #prior for betas
+                                prior(normal(beta1_0, sigma1_0), coef = "time"), #prior for betas
+                                prior(normal(beta2_0, sigma2_0), coef = "time2"), #prior for betas
                                 prior_string("cauchy(0, 1)", class = "sd"), #sd of random effects
                                 prior_string("cauchy(0, 1)", class = "sigma")), #overall variability
                       iter = 10000, warmup = 500, chains = 1, cores = 1, thin = 10,
                       control = list(adapt_delta = .975, max_treedepth = 20),
-                      seed = 190831, open_progress = FALSE)
+                      seed = 190831, open_progress = FALSE, stanvars = stanvar)
 
   quad = quantile(model2$fit@sim$samples[[1]][["b_time2"]], c(alpha/2, 1-alpha/2))
   sig_quad = as.numeric(sign(quad[1]) == sign(quad[2]))
@@ -482,11 +504,25 @@ fit_squared = function(data_met, alpha){
 }
 
 fit_linear = function(data_met, alpha){
+
+  #fit linear regression
+
+  beta0_i = rep(NA,n)
+  sigma0_i= rep(NA,n)
+  for(i in 1:n){
+    lm = lm(measurement ~ -1 + time,data = subset(data_met, individual ==i))
+    beta0_i[i] = lm$coefficients[1]
+    sigma0_i[i] = summary(lm)$sigma^2 #random effect
+  }
+
+  beta0 = mean(beta0_i)
+  sigma0 = var(beta0_i)
+
   model1 <- brms::brm(data = data_met,
                       family = gaussian,
                       measurement ~ 1 + time + (1 | individual), # random intercept by individual
                       prior = c(prior_string("normal(0, 10)", class = "Intercept"),  #prior for the intercept
-                                prior_string("normal(0, 1)", class = "b"), #prior for betas
+                                prior_string("normal( 7.4334, 2.155436)", class = "b"), #prior for betas
                                 prior_string("cauchy(0, 1)", class = "sd"), #sd of random effects
                                 prior_string("cauchy(0, 1)", class = "sigma")), #overall variability
                       iter = 10000, warmup = 500, chains = 1, cores = 1, thin = 10,
@@ -510,6 +546,7 @@ LMMs_data = function(top, data){
     print("Function expects an object of class top_loadings.")
   } else {
 
+  M = length(data)
   bins = lapply(top, "[[", "spectral_bin")
   bins = unique(unlist(bins))
 
@@ -522,7 +559,7 @@ LMMs_data = function(top, data){
     n = nrow(data[[1]])
     serie_list =  lapply(data, "[",, j = index)
     series_matrix = t(matrix(unlist(serie_list),ncol = n, byrow = TRUE))
-
+    #series_matrix = apply(series_matrix, 2, paretoscale)
     series_wide = data.frame(series_matrix)
     series_wide$individual = seq(1,n,1)
 
@@ -531,6 +568,8 @@ LMMs_data = function(top, data){
     series_long$time = as.numeric(as.character(series_long$time))
     series_long$time2 = series_long$time^2
     series_long$time3 = series_long$time^3
+
+
     return(series_long)
   }
 
