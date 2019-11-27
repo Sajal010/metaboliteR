@@ -4,10 +4,12 @@
 \alias{plot.DPPCA_persistance}
 \title{Plotting DPPCA persistance parameters}
 \usage{
-\method{plot}{DPPCA_persistance}(x, ...)
+\method{plot}{DPPCA_persistance}(x, type = "histogram", ...)
 }
 \arguments{
 \item{x}{object of class DPPCA_persistance}
+
+\item{type}{either histogram or trace plot. Default is histogram.}
 
 \item{...}{additional parameters}
 }

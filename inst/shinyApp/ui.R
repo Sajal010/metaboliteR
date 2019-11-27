@@ -26,8 +26,8 @@ shinyUI(ui = tagList(
              # HOME --------------------------------------------------------------------
              tabPanel("Home",
                       column(12, align="center",
-                             img(src='logo.png', align = "right", height=120, width=100),
-                             tags$img(src = "Homepage.jpg",height=120,width=800), # placeholder for banner
+                             # img(src='logo.png', align = "right", height=120, width=100),
+                             tags$img(src = "metaboliteR-banner.png",height=160,width=800), # placeholder for banner
                              # h2(strong("Welcome to the Shiny App for Analysing Metabolomic Data Using R")),
 
 
@@ -136,7 +136,7 @@ shinyUI(ui = tagList(
 
                                                                # PPCA data inputs
                                                                fileInput("PPCA_input_file", h4("File input:", bsButton("PPCA_data_tooltip", label = "",
-                                                                                                                     icon = icon("question"), size = "extra-small")),
+                                                                                                                       icon = icon("question"), size = "extra-small")),
                                                                          multiple = F, accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"),
                                                                          placeholder = "Enter Metabolomic Data Here"),
                                                                bsPopover("PPCA_data_tooltip", title="",
@@ -348,7 +348,7 @@ shinyUI(ui = tagList(
 
                                                                # MPPCA data inputs
                                                                fileInput("MPPCA_input_file", h4("File input:", bsButton("MPPCA_input_data_tooltip", label = "",
-                                                                                                                           icon = icon("question"), size = "extra-small")),
+                                                                                                                        icon = icon("question"), size = "extra-small")),
                                                                          multiple = F, accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"),
                                                                          placeholder = "Enter Metabolomic Data Here"),
                                                                bsPopover("MPPCA_input_data_tooltip", title="",
@@ -505,7 +505,7 @@ shinyUI(ui = tagList(
                                                                             )
                                                                 )
                                                        ),
-                                                       tabPanel("Description", value = "MPPCA_description",
+                                                       tabPanel("Model Description", value = "MPPCA_description",
                                                                 br(),
                                                                 bsCollapse(id = "MPPCA_desc", open = "MPPCA Usage Guide",
                                                                            bsCollapsePanel("MPPCA Usage Guide",
@@ -572,7 +572,7 @@ shinyUI(ui = tagList(
 
                                                                # DPPCA data inputs
                                                                fileInput("DPPCA_input_file", h4("File input:", bsButton("DPPCA_data_tooltip", label = "",
-                                                                                                                       icon = icon("question"), size = "extra-small")),
+                                                                                                                        icon = icon("question"), size = "extra-small")),
                                                                          multiple = F, accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"),
                                                                          placeholder = "Enter Metabolomic Data Here"),
                                                                bsPopover("DPPCA_data_tooltip", title="",
@@ -618,6 +618,128 @@ shinyUI(ui = tagList(
 
                                                                tags$hr(),
                                               ),
+
+
+                                              conditionalPanel(condition="input.DPPCA_plot_tabs=='DPPCA_description'",
+
+                                                               actionButton("DPPCA_data_button", "Go to Data Input",
+                                                                            width = "100%", class = "btn-default"),
+                                                               br(),
+                                                               br(),
+                                                               tabsetPanel(id = "DPPCA_sidetab",
+                                                                           tabPanel("Model Parameters", value = "DPPCA_model_parameters",
+                                                                                    # h3(helpText('Model Parameters:')),
+
+                                                                                    sliderInput("DPPCA_PC_slider", h4("Number of Principal Components:"),
+                                                                                                min = 1, max = 10, value = 2,),
+
+                                                                                    radioButtons(inputId = 'DPPCA_priors_choice', label = h4("Model Priors Settings:"),
+                                                                                                 choices =  c("Default", 'Custom'), inline = TRUE),
+                                                                                    helpText("Clicking Default will reset the values in Model Priors!"),
+
+                                                                                    sliderInput("DPPCA_chain_slider", h4("Length of Chain:"),
+                                                                                                min = 100, max = 3000, value = 500, step=100),
+
+                                                                                    sliderInput("DPPCA_burn_slider", h4("Length of Burn-in Period:"),
+                                                                                                min = 1, max = 1000, value = 50, step=10),
+
+                                                                                    sliderInput("DPPCA_thin_slider", h4("Number of Thinning on Chain:"),
+                                                                                                min = 1, max = 500, value = 10, step=10),
+
+                                                                                    # sliderInput("DPPCA_post_burn_slider", h4("Length of Further Burn-in:"),
+                                                                                    #             min = 100, max = 1000, value = 100, step=100),
+                                                                                    # helpText("Further burn-in applied to chains of loadings and scores to calculate posteriors"),
+                                                                                    # sliderInput("DPPCA_post_thin_slider", h4("Number of Further Thinning:"),
+                                                                                    #             min = 100, max = 1000, value = 100, step=100),
+                                                                                    # helpText("Further thinning applied to chains of loadings and scores to calculate posteriors"),
+
+                                                                                    tags$hr(),
+                                                                                    tags$h6("Click button to run the model using desired parameters:"),
+                                                                                    div(style="display:inline-block",
+                                                                                        actionButton("DPPCA_submit_para_btn", "Submit Parameters", class = "btn-primary"),
+                                                                                    ),
+                                                                                    # div(style="display:inline-block",
+                                                                                    #     strong(textOutput("MPPCA_optimal_q")),
+                                                                                    # ),
+                                                                                    # div(style="display:inline-block",
+                                                                                    #     strong(textOutput("MPPCA_optimal_g")),
+                                                                                    # ),
+
+                                                                                    tags$hr(),
+                                                                           ),
+                                                                           tabPanel("Model Priors", value = "DPPCA_model_priors",
+                                                                                    tags$table(
+                                                                                      tags$tr(width = "100%",
+                                                                                              tags$td(width = "60%", div("prior_alpha")),
+                                                                                              tags$td(width = "40%", textInput(inputId = "prior_alpha", value = 6, label = NULL))),
+                                                                                      tags$tr(width = "100%",
+                                                                                              tags$td(width = "60%", tags$div("prior_beta")),
+                                                                                              tags$td(width = "40%", textInput(inputId = "prior_beta", value = 0.5, label = NULL))),
+                                                                                      tags$tr(width = "100%",
+                                                                                              tags$td(width = "60%", div("prior_sigma2_nu")),
+                                                                                              tags$td(width = "40%", textInput(inputId = "prior_sigma2_nu", value = 10, label = NULL))),
+                                                                                      tags$tr(width = "100%",
+                                                                                              tags$td(width = "60%", tags$div("prior_mu_phi")),
+                                                                                              tags$td(width = "40%", textInput(inputId = "prior_mu_phi", value = 0.75, label = NULL))),
+                                                                                      tags$tr(width = "100%",
+                                                                                              tags$td(width = "60%", div("prior_sigma2_phi")),
+                                                                                              tags$td(width = "40%", textInput(inputId = "prior_sigma2_phi", value = 0.1, label = NULL))),
+                                                                                      tags$tr(width = "100%",
+                                                                                              tags$td(width = "60%", tags$div("prior_alpha_V")),
+                                                                                              tags$td(width = "40%", textInput(inputId = "prior_alpha_V", value = 6, label = NULL))),
+                                                                                      tags$tr(width = "100%",
+                                                                                              tags$td(width = "60%", div("prior_beta_V")),
+                                                                                              tags$td(width = "40%", textInput(inputId = "prior_beta_V", value = 0.5, label = NULL))),
+                                                                                      tags$tr(width = "100%",
+                                                                                              tags$td(width = "60%", tags$div("prior_sigma2_mu")),
+                                                                                              tags$td(width = "40%", textInput(inputId = "prior_sigma2_mu", value = 10, label = NULL))),
+                                                                                      tags$tr(width = "100%",
+                                                                                              tags$td(width = "60%", div("prior_sigma2_PHI")),
+                                                                                              tags$td(width = "40%", textInput(inputId = "prior_sigma2_PHI", value = 0.1, label = NULL))),
+                                                                                      tags$tr(width = "100%",
+                                                                                              tags$td(width = "60%", tags$div("prior_mu_PHI")),
+                                                                                              tags$td(width = "40%", textInput(inputId = "prior_mu_PHI", value = 0.75, label = NULL))),
+                                                                                      tags$tr(width = "100%",
+                                                                                              tags$td(width = "60%", tags$div("prior_omega_inv")),
+                                                                                              tags$td(width = "40%", textInput(inputId = "prior_omega_inv", value = 1, label = NULL)))
+                                                                                    )
+
+
+                                                                           )
+                                                               )
+
+                                              ),
+
+                                              conditionalPanel(condition="input.DPPCA_plot_tabs!='DPPCA_data' & input.DPPCA_plot_tabs!='DPPCA_description' & input.DPPCA_plot_tabs!='DPPCA_LMM_modelling'",
+                                                               actionButton("DPPCA_return_param", "Return to Parameters",
+                                                                            width = "100%", class = "btn-default"),
+                                                               h3(helpText('Graph Controls:')),
+                                                               h3(tags$div(style='color:orange',"As DPPCA takes time to run, this is a pre-run results for plots", id="Pre-run_results_warning")),
+
+                                              ),
+
+                                              conditionalPanel(condition="input.DPPCA_plot_tabs=='DPPCA_loading_analysis_plot'",
+                                                               sliderInput("DPPCA_spectral_plot_PC", h4("Principal Component for Plot:"), min=1, max=2, value=1, step=1, ticks=F),
+                                                               sliderInput("DPPCA_cred_int", h4("Credible Interval:"), min=0.8, max=0.9999, value=0.95, ticks=F),
+                                                               sliderInput("DPPCA_load_analysis_time", h4("Time for Plot:"), min=1, max=8, value=1, step=1, ticks=F),
+                                                               sliderInput("DPPCA_n_load_analysis", h5("Numbers of Significant Bin for Loading Analysis Plot"), min=1, max=20, value=5, step=1, ticks=F),
+                                                               # disabled(downloadButton("dl_dppca_loadings_analysis_btn", span("Download", title="Download a table of data used to produced the graph."))),
+
+                                              ),
+
+                                              conditionalPanel(condition="input.DPPCA_plot_tabs=='DPPCA_LMM_modelling'",
+                                                               h3(helpText('Linear Mixed Model:')),
+                                                               h3(tags$div(style='color:orange',"As DPPCA takes time to run, this is a pre-run results for plots", id="Pre-run_results_warning2")),
+                                                               sliderInput("DPPCA_LMM_cred_int", h4("Significance level (alpha value):"), min=0.0001, max=0.2, value=0.05, ticks=F),
+
+                                                               tags$hr(),
+                                                               tags$h6("Click button to run the LMM model:"),
+                                                               div(style="display:inline-block",
+                                                                   actionButton("DPPCA_submit_LMM_btn", "Submit Parameters", class = "btn-primary"),
+                                                               ),
+
+                                              ),
+
                                  ),
 
                                  mainPanel(width = 9,
@@ -627,44 +749,77 @@ shinyUI(ui = tagList(
                                                 .tabbable > .nav > li > a[data-value='DPPCA_spectral'] {background-color:yellow}
                                                 .tabbable > .nav > li > a[data-value='DPPCA_labels'] {background-color:yellow}
                                                 .tabbable > .nav > li[class=active] > a {background-color:grey; color:white}
+
+                                                #DPPCA_data_tabs li:nth-child(3) {float:right}
+                                                #DPPCA_data_tabs li > a[data-value='DPPCA_original_data_table']{background-color:lightgrey}
                                                         ")),
                                            tabsetPanel(id = "DPPCA_plot_tabs",
-                                             tabPanel("DPPCA data", value = "DPPCA_data",
-                                                      br(),
-                                                      tabsetPanel(id = "DPPCA_data_tabs",
-                                                                  # tabPanel(span("Original Data", title="Data from NMR or Mass Spectroscopy (MS)"),
-                                                                  #          value = 'DPPCA_original',
-                                                                  #          strong(h3(textOutput("DPPCA_spectral_file_name"))),
-                                                                  #          dataTableOutput("DPPCA_original_data_table"),
-                                                                  # ),
-                                                                  tabPanel("Spectral Data",
-                                                                           value = 'DPPCA_spectral',
-                                                                           strong(h3(textOutput("DPPCA_spectral_file_name"))),
-                                                                           h4(textOutput("DPPCA_time_point_showing")),
-                                                                           dataTableOutput("DPPCA_spectral_data_table")
-                                                                  ),
+                                                       tabPanel("DPPCA data", value = "DPPCA_data",
+                                                                br(),
+                                                                tabsetPanel(id = "DPPCA_data_tabs",
+                                                                            # tabPanel(span("Original Data", title="Data from NMR or Mass Spectroscopy (MS)"),
+                                                                            #          value = 'DPPCA_original',
+                                                                            #          strong(h3(textOutput("DPPCA_spectral_file_name"))),
+                                                                            #          dataTableOutput("DPPCA_original_data_table"),
+                                                                            # ),
+                                                                            tabPanel("Spectral Data",
+                                                                                     value = 'DPPCA_spectral',
+                                                                                     strong(h3(textOutput("DPPCA_spectral_file_name"))),
+                                                                                     h4(tags$div(style='color:green', textOutput("DPPCA_time_point_showing"))),
 
-                                                                  tabPanel(span("Group Labels", title="This data is used for colours in plots (eg: Treatment group vs Control group)"),
-                                                                           value = 'DPPCA_labels',
-                                                                           dataTableOutput("DPPCA_labels_data_table")
-                                                                  ),
+                                                                                     dataTableOutput("DPPCA_spectral_data_table")
+                                                                            ),
 
-                                                                  tabPanel("Check with Luiza",
-                                                                           verbatimTextOutput("DPPCA_data_output_for_model")
-                                                                  )
-                                                      )
-                                             ),
+                                                                            tabPanel(span("Group Labels", title="This data is used for colours in plots (eg: Treatment group vs Control group)"),
+                                                                                     value = 'DPPCA_labels',
+                                                                                     dataTableOutput("DPPCA_labels_data_table")
+                                                                            ),
+
+                                                                            tabPanel("Original Data",
+                                                                                     value = "DPPCA_original_data_table",
+                                                                                     br(),
+                                                                                     column(12,
+                                                                                            column(2, "Time Highlighted Color", style = "background-color:cyan;"),
+                                                                                            column(3, "Group Labels Highlighted Color", style = "background-color:lightgreen;"),
+                                                                                            column(3, "Columns Ignored Highlighted Color", style = "background-color:grey;color:white"),
+                                                                                     ),
+                                                                                     uiOutput("DPPCA_original_data_table_UI"),
+                                                                                     uiOutput("DPPCA_original_data_table_UI_color")
+                                                                                     # dataTableOutput("DPPCA_original_data_table"),
+                                                                                     # tags$style(type="text/css", paste0("#DPPCA_original_data_table td:nth-child(", 3, ") {text-align:center;background-color:green;color: white;text-align:center}"))
+                                                                            )
+
+                                                                )
+                                                       ),
 
 
-                                             tabPanel("Description", value = "DPPCA_description",
-                                                      column(12, align="center",
-                                                             h2(strong("DPPCA is bla bla bla")),
-                                                      )
-                                             ),
-                                             tabPanel("Main Plot"),
-                                             tabPanel("Score Plot"),
-                                             tabPanel("Loading Plot")
-
+                                                       tabPanel("Model Description", value = "DPPCA_description",
+                                                                column(12, align="center",
+                                                                       h2(strong("DPPCA is bla bla bla"))
+                                                                )
+                                                       ),
+                                                       tabPanel("Chain Convergence", value = "DPPCA_chain_conver",
+                                                                br(),
+                                                                actionButton("DPPCA_convergence_next_btn", "Next Random Sample Chain for Score/Loadings",
+                                                                             style="float:right", class = "btn-default"),
+                                                                plotOutput("DPPCA_plot_load_score_chain"),
+                                                                br(),
+                                                                br(),
+                                                                plotOutput("DPPCA_plot_persistence_chain")
+                                                       ),
+                                                       tabPanel("Time Influence", value = "DPPCA_time_inf",
+                                                                plotOutput("DPPCA_plot_persistence_histogram"),
+                                                                br(),
+                                                                verbatimTextOutput("DPPCA_plot_persistence_summary")
+                                                       ),
+                                                       tabPanel("Loading Analysis Plot", value = "DPPCA_loading_analysis_plot",
+                                                                plotOutput("DPPCA_plot_top_loadings"),
+                                                       ),
+                                                       tabPanel("LMM Modelling", value = "DPPCA_LMM_modelling",
+                                                                plotOutput("DPPCA_plot_LMM_fit"),
+                                                                br(),
+                                                                verbatimTextOutput("DPPCA_LMM_summary")
+                                                       )
 
                                            )
                                  )

@@ -4,7 +4,7 @@
 \name{UrineDynamic}
 \alias{UrineDynamic}
 \title{Dynamic Urine Data}
-\format{An object of class \code{data.frame} with 241 rows and 193 columns.}
+\format{An object of class \code{data.frame} with 120 rows and 193 columns.}
 \usage{
 UrineDynamic
 }

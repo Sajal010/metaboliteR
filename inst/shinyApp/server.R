@@ -13,7 +13,7 @@ shinyServer(function(input, output, session) {
     observeEvent(input$PPCA_method_button,
                  isolate({
                      updateNavbarPage(session, "menu_bar",
-                                       selected = "PPCA/PPCCA")
+                                      selected = "PPCA/PPCCA")
                      updateTabsetPanel(session, "PPCA_plot_tabs",
                                        selected = "PPCA_data")
                  })
@@ -71,11 +71,11 @@ shinyServer(function(input, output, session) {
         main_columns <- main_columns[main_columns!=input$PPCA_label_slider] # remove label
         main_columns <- main_columns[!main_columns %in% as.numeric(unlist(strsplit(input$PPCA_ignore_column, ",")))] # remove ignore by col number
         if(input$PPCA_scale=='PQN'){
-        a<-scale_data(original_data()[, main_columns],"PQN")
-        b<-as.data.frame(a$newXtrain)
+            a<-scale_data(original_data()[, main_columns],"PQN")
+            b<-as.data.frame(a$newXtrain)
         }
         else
-        apply(original_data()[, main_columns], 2,function (y) scale_data(y,input$PPCA_scale))
+            apply(original_data()[, main_columns], 2,function (y) scale_data(y,input$PPCA_scale))
         #original_data()[, main_columns]
     })
 
@@ -262,6 +262,21 @@ shinyServer(function(input, output, session) {
         DPPCA_original_data()
     }, options = list(pageLength=10), escape = FALSE)
 
+    output$DPPCA_original_data_table_UI <- renderUI({
+        tagList(
+            dataTableOutput("DPPCA_original_data_table"),
+            tags$style(type="text/css", paste0("#DPPCA_original_data_table td:nth-child(", input$DPPCA_time_slider, ") {background-color:cyan}")),
+            tags$style(type="text/css", paste0("#DPPCA_original_data_table td:nth-child(", input$DPPCA_label_slider, ") {background-color:lightgreen}")),
+
+        )
+    })
+
+    output$DPPCA_original_data_table_UI_color <- renderUI({
+        lapply(as.numeric(unlist(strsplit(input$DPPCA_ignore_column, ","))), function(i) {
+            tags$style(type="text/css", paste0("#DPPCA_original_data_table td:nth-child(", i, ") {background-color:grey}"))
+        })
+    })
+
     ## DPPCA Data list by Time
     DPPCA_time_data_list <- reactive({ # Read data
         if(input$DPPCA_time_slider == 0) {return(DPPCA_original_data())}
@@ -286,6 +301,7 @@ shinyServer(function(input, output, session) {
 
         # Performing scaling to data in each time point
         only_spectral_data_scaled <- lapply(only_spectral_data, function(x) apply(x, 2, function(y) scale_data(y, input$DPPCA_scale)))
+        only_spectral_data_scaled_matrix <- lapply(only_spectral_data_scaled, function(x) as.matrix(x))
     })
 
     # This reactive output contains the dataset and display the dataset in table format
@@ -294,11 +310,6 @@ shinyServer(function(input, output, session) {
         DPPCA_spectral_data_list()[[input$DPPCA_time_selected]]
     }, options = list(pageLength=10), escape = FALSE)
 
-
-    #### Temporary printed for input check ####
-    output$DPPCA_data_output_for_model <- renderPrint(
-        DPPCA_spectral_data_list()[]
-    )
 
     # DPPCA Labels Data
     DPPCA_labels_data <- reactive({ # Read data
@@ -361,7 +372,7 @@ shinyServer(function(input, output, session) {
     observeEvent(input$PPCA_parameter_button,
                  isolate({
                      updateTabsetPanel(session, "PPCA_plot_tabs",
-                                      selected = "PPCA_description")
+                                       selected = "PPCA_description")
                  })
     )
 
@@ -699,7 +710,7 @@ shinyServer(function(input, output, session) {
 
     # dppca --------------------------------------------------------------------
 
-    # PPCA parameter button
+    # DPPCA parameter button
     observeEvent(input$DPPCA_parameter_button,
                  isolate({
                      updateTabsetPanel(session, "DPPCA_plot_tabs",
@@ -707,7 +718,7 @@ shinyServer(function(input, output, session) {
                  })
     )
 
-    # PPCA data button
+    # DPPCA data button
     observeEvent(input$DPPCA_data_button,
                  isolate({
                      updateTabsetPanel(session, "DPPCA_plot_tabs",
@@ -722,6 +733,153 @@ shinyServer(function(input, output, session) {
                                        selected = "DPPCA_description")
                  })
     )
+
+    observeEvent(input$DPPCA_priors_choice,
+                 if(input$DPPCA_priors_choice == "Custom") {
+                     isolate({
+                         updateTabsetPanel(session, "DPPCA_sidetab",
+                                           selected = "DPPCA_model_priors")
+                     })
+                 }
+                 else if(input$DPPCA_priors_choice == "Default") {
+                     isolate({
+                         updateTextInput(session, "prior_alpha", value = 6)
+                         updateTextInput(session, "prior_beta", value = 0.5)
+                         updateTextInput(session, "prior_sigma2_nu", value = 10)
+                         updateTextInput(session, "prior_mu_phi", value = 0.75)
+                         updateTextInput(session, "prior_sigma2_phi", value = 0.1)
+                         updateTextInput(session, "prior_alpha_V", value = 6)
+                         updateTextInput(session, "prior_beta_V", value = 0.5)
+                         updateTextInput(session, "prior_sigma2_mu", value = 10)
+                         updateTextInput(session, "prior_sigma2_PHI", value = 0.1)
+                         updateTextInput(session, "prior_mu_PHI", value = 0.75)
+                         updateTextInput(session, "prior_omega_inv", value = 1)
+                     })
+                 }
+    )
+
+    ### Put pre-run values into dppca_output
+    dppca_output <- reactiveValues(
+      result=dppca_results, lmm = lmm_fit)
+
+    # Submit DPPCA Parameter Button
+    observeEvent(input$DPPCA_submit_para_btn,
+                 isolate({
+
+                     ### Removing pre-run results
+                     hide(id = "Pre-run_results_warning")
+
+                     showNotification("Running DPPCA...", duration = NULL, id = "dppca_progress",
+                                      closeButton = FALSE, type = "message")
+
+                     # Obtain DPPCA priors
+                     DPPCA_model_priors <- list(alpha = as.numeric(input$prior_alpha),
+                                                beta = as.numeric(input$prior_beta),
+                                                sigma2_nu = as.numeric(input$prior_sigma2_nu),
+                                                mu_phi = as.numeric(input$prior_mu_phi),
+                                                sigma2_phi = as.numeric(input$prior_sigma2_phi),
+                                                alpha_V = as.numeric(input$prior_alpha_V),
+                                                beta_V = as.numeric(input$prior_beta_V),
+                                                sigma2_mu = as.numeric(input$prior_sigma2_mu),
+                                                sigma2_Phi = as.numeric(input$prior_sigma2_PHI),
+                                                mu_Phi = as.numeric(input$prior_mu_PHI),
+                                                omega_inv = rep(list(diag(input$prior_omega_inv, input$DPPCA_PC_slider)),length(DPPCA_spectral_data_list()))
+                     )
+
+                     # Run DPPCA model
+                     DPPCA_object <- DPPCA(data_time = DPPCA_spectral_data_list(),
+                                           q = input$DPPCA_PC_slider,
+                                           chain_output = input$DPPCA_chain_slider,
+                                           prior_params = DPPCA_model_priors,
+                                           burn_in = input$DPPCA_burn_slider,
+                                           thin = input$DPPCA_thin_slider)
+
+
+
+                     # Switches to Score plot if User is in Description when model has finished running.
+                     if(input$DPPCA_plot_tabs == 'DPPCA_description') {
+                         updateTabsetPanel(session, "DPPCA_plot_tabs",
+                                           selected = "DPPCA_chain_conver"
+                         )
+                     }
+
+
+                     ### Removing pre-run results
+                     dppca_output$result <- DPPCA_object
+
+                     on.exit(removeNotification("dppca_progress"), add = TRUE)
+                 })
+    )
+
+    # Chain Convergence Tab plot
+    output$DPPCA_plot_load_score_chain <- renderPlot({
+        par(mfrow=c(1,2))
+        plot(dppca_output$result$U_chain)
+        plot(dppca_output$result$W_chain)
+        par(mfrow=c(1,1))
+    })
+    observeEvent(input$DPPCA_convergence_next_btn,
+                 isolate({
+                     output$DPPCA_plot_load_score_chain <- renderPlot({
+                         par(mfrow=c(1,2))
+                         plot(dppca_output$result$U_chain)
+                         plot(dppca_output$result$W_chain)
+                         par(mfrow=c(1,1))
+                     })
+                 })
+    )
+    output$DPPCA_plot_persistence_chain <- renderPlot({
+        plot(dppca_output$result$persistance, type = "chain")
+    })
+    # Time Influence Tab plots
+    output$DPPCA_plot_persistence_histogram <- renderPlot({
+        plot(dppca_output$result$persistance)
+    })
+    output$DPPCA_plot_persistence_summary <- renderPrint({
+        summary(dppca_output$result$persistance)
+    })
+    # Loading Analysis Tab plots
+    DPPCA_top <- reactive({
+        DPPCA_top_loadings(n = input$DPPCA_n_load_analysis,
+                           PC = input$DPPCA_spectral_plot_PC,
+                           W = dppca_output$result$W_chain,
+                           cred_level = input$DPPCA_cred_int)
+    })
+    output$DPPCA_plot_top_loadings <- renderPlot({
+        plot.top_loadings(DPPCA_top(), M=input$DPPCA_load_analysis_time)
+    })
+    # LMM Results Tab plots
+    observeEvent(input$DPPCA_submit_LMM_btn,
+                 isolate({
+                     ### Removing pre-run results
+                     hide(id = "Pre-run_results_warning2")
+                     output$DPPCA_LMM_summary <- renderPrint({
+                         NULL
+                     })
+                     output$DPPCA_plot_LMM_fit <- renderPlot({
+                         NULL
+                     })
+
+                     showNotification("Running DPPCA_LMM...", duration = NULL, id = "dppca_lmm_progress",
+                                      closeButton = FALSE, type = "message")
+
+                     lmm_results <- fit_LMMs(DPPCA_top(), alpha = input$DPPCA_LMM_cred_int,
+                                             data = DPPCA_spectral_data_list())
+
+                     ### Removing pre-run results
+                     dppca_output$lmm <- lmm_results
+
+                     on.exit(removeNotification("dppca_lmm_progress"), add = TRUE)
+                 })
+    )
+    output$DPPCA_LMM_summary <- renderPrint({
+        summary(dppca_output$lmm)
+    })
+    output$DPPCA_plot_LMM_fit <- renderPlot({
+        plot(dppca_output$lmm)
+    })
+
+
 
     # Guides ------------------------------------------------------------------
 

@@ -4,7 +4,7 @@
 #'
 #' @param x object of class DPPCA_persistance
 #' @param ... additional parameters
-#' @type either histogram or trace plot. Default is histogram.
+#' @param type either histogram or trace plot. Default is histogram.
 #'
 #' @export
 #'

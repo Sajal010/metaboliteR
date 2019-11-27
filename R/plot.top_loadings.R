@@ -4,6 +4,7 @@
 #' @param M number of time dimension to be plotted
 #' @param ... additional arguments
 #'
+#' @export plot.top_loadings
 #' @export
 #'
 
