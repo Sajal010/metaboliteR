@@ -23,9 +23,10 @@ summary.DPPCA_persistance = function(object, cred_level = 0.95, ...){
   Phi = list();
   for(i in 1:k){
     Phi[[paste0("Phi",i)]] = unlist(lapply(Phi_chain, "[[", i))
-    cat(paste0("(PC",i,")"), "Mean:", round(mean(Phi[[i]]),3), "Credible interval: ",  round(quantile(Phi[[i]], c(alpha/2,1 - alpha/2 )),3), "\n")
+    cat(paste0("(PC",i,")"), "Mean:", round(mean(Phi[[i]]),4),"|",paste0(100*(1-alpha),"% credible interval: "),  round(quantile(Phi[[i]], c(alpha/2,1 - alpha/2 )),4), "\n")
   }
   cat(" Persistance of errors:", "\n",
-      "Mean :", round(mean(phi_chain),3), "Credible interval: ", round(quantile(phi_chain, c(alpha/2,1 - alpha/2 )),3), "\n")
+      "Mean :", round(mean(phi_chain),4),"|",paste0(100*(1-alpha),"% credible interval: "), round(quantile(phi_chain, c(alpha/2,1 - alpha/2 )),4), "\n")
 
 }
+

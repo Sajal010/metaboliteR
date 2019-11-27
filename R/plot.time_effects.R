@@ -38,7 +38,7 @@ plot.time_effects = function(x,...){
   effects_long$bin = gsub("X","", effects_long$bin)
 
   ggplot2::ggplot(effects_long, aes(x = effects_long$time, y = effects_long$intensity, colour = effects_long$bin)) + geom_line() +
-    theme_bw() + labs(colour = "spectral bin", y = 'Average intensity') +
+    theme_bw() + labs(colour = "spectral bin", y = 'Average intensity', x = "time") +
     scale_x_continuous(limits = c(1, 8), expand = c(0, 0))
 
 }

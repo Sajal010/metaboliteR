@@ -26,8 +26,8 @@ plot.scores_chain= function(x,...){
   chain = matrix(unlist(U), ncol = q, byrow = TRUE)
 
   ymin = min(chain); ymax = max(chain);
-  plot(chain[,1]-0.5, type="l", ylab = "Latent score", xlab = "Thinned iteration number", ylim = c(ymin,ymax ))
-  lines(chain[,2]+0.5, type = "l", col = "red")
+  plot(chain[,1], type="l", ylab = "Latent score", xlab = "Thinned iteration number", ylim = c(mean(chain[,1])-1.5,mean(chain[,1])+1.5))
+  lines(chain[,2]+ mean(chain[,1]), type = "l", col = "red")
   legend("topright", legend=c("PC 1", "PC 2"),
          col=c("black", "red"), lty=1, cex=0.8, box.lty=0)
 

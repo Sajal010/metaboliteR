@@ -29,8 +29,8 @@ plot.loadings_chain= function(x,...){
   chain = matrix(unlist(W), ncol = q, byrow = TRUE)
 
   ymin = min(chain); ymax = max(chain);
-  plot(chain[,1]+0.3, type="l", ylab = "Loadings", xlab = "Thinned iteration number", ylim = c(ymin-0.3,ymax+0.3 ))
-  lines(chain[,2]-0.3, type = "l", col = "red")
+  plot(chain[,1]+1, type="l", ylab = "Loadings", xlab = "Thinned iteration number", ylim = c(ymin-1.5,ymax+1.5 ))
+  lines(chain[,2]-1, type = "l", col = "red")
   legend("topright", legend=c("PC 1", "PC 2"),
          col=c("black", "red"), lty=1, cex=0.8, box.lty=0)
 
