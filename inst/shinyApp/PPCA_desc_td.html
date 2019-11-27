@@ -28,14 +28,18 @@
 <p>The model has a few assumptions in order to obtain the parameter estimates:</p>
 <ol>
 <li>\(\underline{\epsilon_i} \sim MVN(\underline{0}, \sigma^2 \mathbf{I})\)</li>
-<li><strong>For PPCA:&nbsp;</strong>\(\underline{u_i} \sim MVN(\underline{0}, \mathbf{I})\)&nbsp; &nbsp; &nbsp;while&nbsp; &nbsp; &nbsp;<span style="color: #0000ff;"><strong>For PPCCA:&nbsp;</strong></span>\(\underline{u_i} \sim MVN(\) <span style="color: #0000ff;">\(\underline{\delta_i}\)</span> \(, \mathbf{I})\)</li>
+<li><strong>For PPCA:&nbsp;</strong>\(\underline{u_i} \sim MVN(\underline{0}, \mathbf{I})\)&nbsp; &nbsp; &nbsp;while&nbsp; &nbsp; &nbsp;<span style="color: #0000ff;"><strong>For PPCCA:&nbsp;</strong></span>\(\underline{u_i} \sim MVN(\) <span style="color: #0000ff;">\(\underline{\delta_i}\)</span> \(, \mathbf{I})\)&nbsp; which&nbsp;<span style="color: #0000ff;">\(\underline{\delta_i}=\alpha\underline{C_i}\)</span> &nbsp;</li>
 </ol>
-<p>where \(\mathbf{I}\) is the Identity matrix</p>
+<p>where,</p>
+<p>\(\mathbf{I}\) is the Identity matrix</p>
+<p><span style="color: #0000ff;">\(\underline{\delta_i}\) is the expected value of the score of observation \(i\)&nbsp;</span></p>
+<p><span style="color: #0000ff;">\(\alpha\) is the parameter matrix indicating the covariates influence</span></p>
+<p><span style="color: #0000ff;">\(\underline{C_i}\) is the actual covariates value taken from the covariates data</span></p>
 <p><span style="text-decoration: underline;"><strong>Model Algorithm:</strong></span></p>
 <ol>
-<li>Initialise loadings matrix,&nbsp;\(\mathbf{W}\), and sigma parameter,&nbsp;\(\sigma\)&nbsp;</li>
+<li>Initialise loadings matrix,&nbsp;\(\mathbf{W}\), and sigma parameter,&nbsp;\(\sigma\) <span style="color: #0000ff;">(also \(\underline{\delta_i}\), \(\alpha\) if for PPCCA)</span></li>
 <li>Calculate the conditional expectation of the score,&nbsp;\(\mathbb{E}(\underline{u_i}|...)\) (E step)&nbsp;</li>
-<li>Calculate the maximum likelihood function with respect to the parameters and re-initialize them</li>
+<li>Calculate the maximum likelihood function with respect to the parameters and re-initialize them (M step)</li>
 <li>Repeat step 2 and 3 until convergence criterion is achieved or until maximum iteration is arrived.</li>
 </ol>
 
