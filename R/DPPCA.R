@@ -20,16 +20,22 @@
 #' @param data_time List of M matrixes or data frames containing the observed data for each time point. \cr
 #' The data frame should contain observations in rows and spectral bins in columns.
 #'
+#' @param  post_burn_in further burn-in applied to chains of loadings and scores to calculate posteriors
+#' @param post_thin further thinning applied to chains of loadings and scores to calculate posteriors
+#'
 #' @export
 #'
 
 
-DPPCA = function(q,chain_output, prior_params, burn_in, thin, data_time){
+DPPCA = function(q,chain_output, prior_params, burn_in, thin, data_time, post_burn_in = 10, post_thin = 5){
   M = length(data_time)
   n = length(data_time[[1]])
   #chain size: desired chain size
 
   chain_size = chain_output*(thin+1) + burn_in
+
+  store = c( c(rep(FALSE,burn_in)), rep( c( TRUE,rep(FALSE, thin)),(chain_size-burn_in)/(thin+1) ))
+  store_index = which(store)
 
   alpha = prior_params[["alpha"]];
   beta = prior_params[["beta"]];
@@ -79,16 +85,16 @@ DPPCA = function(q,chain_output, prior_params, burn_in, thin, data_time){
   lambda = sapply(seq(1,M,1), init_lambda,U)
 
   #Storing the chains
-  U_chain = rep(list(rep(list(matrix(NA, nrow = q, ncol = n)),M)), chain_size)
-  W_chain = rep(list(rep(list(matrix(NA, nrow = n, ncol = q)),M)), chain_size)
-  eta_chain = matrix(NA, ncol = M, nrow = chain_size)
-  H_chain = rep(list(rep(list(rep(NA, q)),M)), chain_size)
-  v2_chain = rep(NA, chain_size)
-  nu_chain = rep(NA, chain_size)
-  phi_chain = rep(NA, chain_size)
-  V_chain =  rep(list(matrix(NA, nrow = 1, ncol = q)), chain_size)
-  mu_chain = rep(list(matrix(NA, nrow = 1, ncol = q)), chain_size)
-  Phi_chain = rep(list(matrix(NA, nrow = 1, ncol = q)), chain_size)
+  U_chain = rep(list(rep(list(matrix(NA, nrow = q, ncol = n)),M)), chain_output)
+  W_chain = rep(list(rep(list(matrix(NA, nrow = n, ncol = q)),M)), chain_output)
+  eta_chain = matrix(NA, ncol = M, nrow = chain_output)
+  H_chain = rep(list(rep(list(rep(NA, q)),M)), chain_output)
+  v2_chain = rep(NA, chain_output)
+  nu_chain = rep(NA, chain_output)
+  phi_chain = rep(NA, chain_output)
+  V_chain =  rep(list(matrix(NA, nrow = 1, ncol = q)), chain_output)
+  mu_chain = rep(list(matrix(NA, nrow = 1, ncol = q)), chain_output)
+  Phi_chain = rep(list(matrix(NA, nrow = 1, ncol = q)), chain_output)
 
   #Store acception for MH steps
   eta_accept = rep(0, M)
@@ -99,18 +105,17 @@ DPPCA = function(q,chain_output, prior_params, burn_in, thin, data_time){
   step = 1
   while(step <= chain_size){
 
+    keep = sum(step == store_index)
+
     #Step 1A
     U = gibbs_U(data, eta, W, H)
-    U_chain[[step]]<- U
 
     #Step 1B
     W = gibbs_W(data, eta, omega_inv, U)
-    W_chain[[step]]<- W
 
     #Step 1C
     mh1= MH_eta(eta,U,W,v2,phi,nu, data, eta_accept)
     eta = mh1$eta
-    eta_chain[step,]<- eta
     eta_accept = mh1$accepted
 
     #Step 1D
@@ -123,68 +128,48 @@ DPPCA = function(q,chain_output, prior_params, burn_in, thin, data_time){
       H <- diag(exp(lambda[[m]])); H
     }
     H <- sapply(seq(1,M,1), update_H, lambda, simplify = FALSE)
-    H_chain[[step]] <- H
 
     #Step 2A
     v2 = gibbs_v2(alpha, beta, eta, phi, nu)
-    v2_chain[step] <- v2
 
     #Step 2B
     nu = gibbs_nu(sigma2_nu, phi, eta, v2,data)
-    nu_chain[step] <- nu
 
     #Step 2C
     mh3 = MH_phi(mu_phi, sigma2_phi, eta, nu, v2,phi ,accept_phi)
     phi = mh3$phi
-    phi_chain[step] <- phi
     accept_phi = mh3$accepted
 
     #Step 3A
     V = gibbs_V(alpha_V,beta_V,lambda,Phi, mu)
-    V_chain[[step]]<- V
 
     #Step 3B
     mu = gibbs_mu(sigma2_nu, Phi,V,lambda)
-    mu_chain[[step]] <- mu
 
     #Step 3C
     mh4 = MH_Phi(mu_Phi, sigma2_Phi,Phi, V,lambda, mu, accept_Phi)
     Phi = mh4$Phi
-    Phi_chain[[step]] <- Phi
     accept_Phi = mh4$accepted
 
+    if(keep ==1){
+      k = which(step == store_index)
+      U_chain[[k]]<- U
+      W_chain[[k]]<- W
+      eta_chain[k,]<- eta
+      H_chain[[k]] <- H
+      v2_chain[k] <- v2
+      nu_chain[k] <- nu
+      phi_chain[k] <- phi
+      V_chain[[k]]<- V
+      mu_chain[[k]] <- mu
+      Phi_chain[[k]] <- Phi
+    }
+
     step = step + 1
-    print(step)
 
-  }
-
-  ###### Burn in and thinning
-  if(burn_in > 0){
-    U_chain = tail(U_chain, -burn_in)
-    W_chain = tail(W_chain, -burn_in)
-    eta_chain = tail(eta_chain, -burn_in)
-    H_chain = tail(H_chain, -burn_in)
-    v2_chain = tail(v2_chain, -burn_in)
-    nu_chain = tail(nu_chain, -burn_in)
-    phi_chain = tail(phi_chain, -burn_in)
-    V_chain = tail(V_chain, -burn_in)
-    mu_chain = tail(mu_chain, -burn_in)
-    Phi_chain = tail(Phi_chain, -burn_in)
-  }
-
-  if(thin>0){
-
-    U_chain = U_chain[ c( TRUE,rep(FALSE, thin)) ]
-    W_chain = W_chain[ c( TRUE,rep(FALSE, thin)) ]
-    eta_chain = eta_chain[ c( TRUE,rep(FALSE, thin)) ]
-    test = H_chain[ c( TRUE,rep(FALSE, thin)) ]
-    H_chain= H_chain[ c( TRUE,rep(FALSE, thin)) ]
-    v2_chain= v2_chain[ c( TRUE,rep(FALSE, thin)) ]
-    nu_chain= nu_chain[ c( TRUE,rep(FALSE, thin)) ]
-    phi_chain= phi_chain[ c( TRUE,rep(FALSE, thin))]
-    V_chain= V_chain[ c( TRUE,rep(FALSE, thin)) ]
-    mu_chain= mu_chain[ c( TRUE,rep(FALSE, thin)) ]
-    Phi_chain= Phi_chain[ c( TRUE,rep(FALSE, thin))]
+    if((step %% 500)==0){
+      print(step)
+    }
 
   }
 
@@ -193,8 +178,27 @@ DPPCA = function(q,chain_output, prior_params, burn_in, thin, data_time){
   persistance_params[["Phi_chain"]]<-Phi_chain
   class(persistance_params) <- "DPPCA_persistance"
 
-  output = list(U_chain = U_chain,
-                W_chain = W_chain,
+  ## Rotate loadings and scores to match MLE loadings ##
+  rotation = rotate_W_U(W_chain, U_chain, W_template)
+  rotated_W = rotation$W_rotated
+  rotated_U = rotation$U_rotated
+
+  #Calculate posterior estimates U and W (median) performing burn-in and thinning again
+  U_post = sapply(seq(1,M,1), posterior_U, rotated_U, post_burn_in, post_thin)
+  W_post = sapply(seq(1,M,1), posterior_W, rotated_W, post_burn_in, post_thin)
+
+  #Rotate with respect to time 1: (transform the latent scores)
+  rotate2 = rotate_post_scores(U_post, W_post)
+  U_post_rot = rotate2$U_post_rot
+
+  class(rotated_U)<-"scores_chain"
+  class(rotated_W)<- "loadings_chain"
+
+  output = list(U_chain = rotated_U,
+                #U_chain = U_chain,
+                W_chain = rotated_W,
+                posterior_W = W_post,
+                posterior_U_rotated = U_post_rot,
                 eta_chain = eta_chain,
                 H_chain = H_chain,
                 v2_chain = v2_chain,
