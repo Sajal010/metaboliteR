@@ -42,6 +42,7 @@ plot.MPPCA_score <- function(x, x_axis_PC, y_axis_PC, clustering, labels, conf_l
       else {
         if(missing(labels) | missing(clustering)) { # no labels
           par(mfrow=c(ceiling(group_n/2),2))
+          output <- c()
           for(group in 1:group_n) {
             plot(x$score[[group]][x_axis_PC,], x$score[[group]][y_axis_PC,], pch = 16,
                  main=paste('Group', group, 'Score Plot'), xlab = rownames(x$score[[group]])[x_axis_PC], ylab = rownames(x$score[[group]])[y_axis_PC])
@@ -52,11 +53,18 @@ plot.MPPCA_score <- function(x, x_axis_PC, y_axis_PC, clustering, labels, conf_l
             }
             legend("topleft", bty = "n", c("95% Posterior Set"), col = "grey50", lty = c(1), cex=0.7)
 
+            output <- cbind(output, x$score[[group]][x_axis_PC,], x$score[[group]][y_axis_PC,])
+            colnames(output)[2*group] <- paste0("Group", group, "_PC", y_axis_PC) # this has to go first if not error on first initialize
+            colnames(output)[2*group-1] <- paste0("Group", group, "_PC", x_axis_PC)
+
           }
           par(mfrow=c(1,1))
+
+          invisible(output)
         }
         else if(labels[1]==-1){ # for shiny app
           par(mfrow=c(ceiling(group_n/2),2))
+          output <- c()
           for(group in 1:group_n) {
             plot(x$score[[group]][x_axis_PC,], x$score[[group]][y_axis_PC,], pch = 16,
                  main=paste('Group', group, 'Score Plot'), xlab = rownames(x$score[[group]])[x_axis_PC], ylab = rownames(x$score[[group]])[y_axis_PC])
@@ -67,11 +75,17 @@ plot.MPPCA_score <- function(x, x_axis_PC, y_axis_PC, clustering, labels, conf_l
             }
             legend("topleft", bty = "n", c("95% Posterior Set"), col = "grey50", lty = c(1), cex=0.7)
 
+            output <- cbind(output, x$score[[group]][x_axis_PC,], x$score[[group]][y_axis_PC,])
+            colnames(output)[2*group] <- paste0("Group", group, "_PC", y_axis_PC) # this has to go first if not error on first initialize
+            colnames(output)[2*group-1] <- paste0("Group", group, "_PC", x_axis_PC)
           }
           par(mfrow=c(1,1))
+
+          invisible(output)
         }
         else { # has labels
           par(mfrow=c(ceiling(group_n/2),2))
+          output <- c()
           for(group in 1:group_n) {
             plot(x$score[[group]][x_axis_PC,], x$score[[group]][y_axis_PC,], col = c(as.factor(cluster[[group]])), pch = 16,
                  main=paste('Group', group, 'Score Plot'), xlab = rownames(x$score[[group]])[x_axis_PC], ylab = rownames(x$score[[group]])[y_axis_PC])
@@ -83,8 +97,13 @@ plot.MPPCA_score <- function(x, x_axis_PC, y_axis_PC, clustering, labels, conf_l
             legend('topright', col=c(unique(as.factor(cluster[[group]]))), legend = levels(as.factor(cluster[[group]])), pch=16)
             legend("topleft", bty = "n", c("95% Posterior Set"), col = "grey50", lty = c(1), cex=0.7)
 
+            output <- cbind(output, x$score[[group]][x_axis_PC,], x$score[[group]][y_axis_PC,])
+            colnames(output)[2*group] <- paste0("Group", group, "_PC", y_axis_PC) # this has to go first if not error on first initialize
+            colnames(output)[2*group-1] <- paste0("Group", group, "_PC", x_axis_PC)
           }
           par(mfrow=c(1,1))
+
+          invisible(output)
         }
       }
 
@@ -151,7 +170,6 @@ plot.MPPCA_score <- function(x, x_axis_PC, y_axis_PC, clustering, labels, conf_l
         }
       }
     }
-    invisible(t(x$score))
   }
   else
     print("Something Wrong with Score Plot!")

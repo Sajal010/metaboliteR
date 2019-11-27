@@ -11,14 +11,14 @@ In addition, metaboliteR also incorporates a method of estimating sample size fo
 
 metaboliteR also has a graphical user interface (GUI) application through the use of Shiny. This can be accessed through [here]() or the image below:
 
-[<img src="https://gitlab.com/metaboliter/metaboliter/raw/master/inst/shinyApp/www/app-logo.png" height="90" width="179"/>](https://gitlab.com/metaboliter/metaboliter/raw/master/inst/shinyApp/www/app-logo.png)
+[<img src="https://gitlab.com/metaboliter/metaboliter/raw/master/inst/shinyApp/www/app-logo.png" height="90" width="179"/>](https://metaboliter.shinyapps.io/metaboliter/)
 [<img src="https://gitlab.com/metaboliter/metaboliter/raw/master/inst/shinyApp/www/webpage-logo.png" height="90" width="179"/>](https://metaboliter.gitlab.io/metaboliter)
 
 
 ## Installation
 
 ```r
-# Install from CRAN
+# Install from CRAN (To be published.. )
 install.packages("metaboliteR")
 
 # Or the development version from Gitlab
