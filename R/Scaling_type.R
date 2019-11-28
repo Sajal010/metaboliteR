@@ -18,9 +18,16 @@ vastscale<-function(x){
   return(((x-mean(x))/st_dev(x))*(mean(x)/st_dev(x)))
 }
 
+norm<-function(data){
+  a<-rowSums(abs(data),na.rm = T)
+  data1<-data/a
+  ref<-apply(data1,2,median,na.rm=T)
+  new<-t(t(data1)/ref)
+  coe<-apply(new, 2, median,na.rm=T)
+  return(data1/coe)
+}
 
 #' Title
-#' @importFrom KODAMA normalization
 #' @param x data
 #' @param scale_type scaling type to be used by the user
 #'
@@ -32,7 +39,7 @@ scale_data <- function(x, scale_type="none"){
     x
 
   else if(scale_type=="PQN")
-    normalization(x, method = "pqn")
+    norm(x)
 
   else if(scale_type=="autoscale")
     autoscale(x)

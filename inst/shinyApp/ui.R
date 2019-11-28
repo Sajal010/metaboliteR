@@ -3,6 +3,8 @@ library(shinyBS)
 library(shinythemes)
 library(shinyjs)
 library(metaboliteR)
+library(shinyalert)
+library(shinyWidgets)
 
 shinyUI(ui = tagList(
   # Color error output red
@@ -829,20 +831,190 @@ shinyUI(ui = tagList(
              ),
 
 
-             # TOOLS -------------------------------------------------------------------
-             navbarMenu("Tools",
+             ### Sample Size Estimation --------------------------------------------------
+             navbarMenu("Sample Size Estimation",
 
                         ### Sample Size Estimation --------------------------------------------------
                         tabPanel("Sample Size Estimation",
-                                 sidebarPanel(width = 3,
-                                              "METSIZER PLACEHOLDER"
-                                 ),
 
-                                 mainPanel(width = 9,
-                                           tabsetPanel(
-                                             tabPanel("METSIZER plots placeholder")
-                                           )
+                                 sidebarPanel(width = 3,
+                                              tabsetPanel(id = "sample_size_tab",
+                                                          tabPanel("PPCA",
+
+
+                                                                   fileInput("main_file", h4("File input:", bsButton("sample_data_tooltip", label = "",
+                                                                                                                     icon = icon("question"), size = "extra-small")),
+                                                                             multiple = F, accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"),
+                                                                             placeholder = "Enter Metabolomic Data Here"),
+                                                                   bsPopover("sample_data_tooltip", title="",
+                                                                             content="Please make sure: rows are samples/observations, columns are spectral bins",
+                                                                             trigger = "hover"),
+
+                                                                   # tags$hr(),
+                                                                   h4(helpText("Is there a header in the data?")),
+                                                                   checkboxInput(inputId = 'header', label = 'Tick for Yes', value = TRUE),
+
+                                                                   radioButtons(inputId = 'sep', label = h4(helpText("How is the data separated?")),
+                                                                                inline = TRUE, choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
+                                                                   h4(helpText("Enter Desired Scaling:", bsButton("scale_type_sample_tooltip", label = "",
+                                                                                                                  icon = icon("question"), size = "extra-small"))),
+                                                                   bsPopover("scale_type_sample_tooltip", title="Types of Scaling",
+                                                                             content="Choosing any scale will pre-process the data by the given formula. Further details on Guide Tab.",
+                                                                             trigger = "hover"),
+                                                                   radioButtons(inputId = 'scale', label = NULL,
+                                                                                choiceNames =  c("None", 'PQN Scale',
+                                                                                                 "Auto Scale \\(\\quad\\) \\(\\frac{x-\\mu}{\\sigma}\\)",
+                                                                                                 "Pareto Scale \\(\\space\\) \\(\\frac{x-\\mu}{\\sqrt{\\sigma}}\\)",
+                                                                                                 "Range Scale \\(\\space\\) \\(\\frac{x-\\mu}{x_{max} - x_{min}}\\)",
+                                                                                                 "Vast Scale \\(\\quad\\) \\(\\frac{x-\\mu}{\\sigma}(\\frac{\\mu}{\\sigma}\\))"),
+                                                                                choiceValues = c('none', 'PQN', 'autoscale', 'paretoscale', 'rangescale', 'vastscale'),
+                                                                                selected = 'none'),
+                                                                   div(helpText("*μ is the column mean value while σ is the standard deviation"), style = "font-size:80%"),
+
+                                                                   h5("1.Please Select Input Values:",align="centre"),
+                                                                   # Input: Spectral Bins ----
+                                                                   sliderInput("bins", "Spectral Bins:",
+                                                                               min = 50, max = 200,
+                                                                               value = 500,animate = TRUE),
+                                                                   br(),
+                                                                   # Input: Proportion of significant bins (m) ----
+                                                                   sliderInput("sig.bins", "Proportion of significant bins (m):",
+                                                                               min = 0.1, max = 1,
+                                                                               value = 0.5, step = 0.05,animate = TRUE),
+                                                                   br(),
+                                                                   # Input: Target FDR ----
+                                                                   sliderInput("target.fdr", "Target FDR:",
+                                                                               min = 0.01, max=0.2,
+                                                                               step = 0.01,animate = TRUE,value = 0.05),
+
+                                                                   h5("2. To investigate the impact of 'm' on FDR please choose:",align="centre"),
+                                                                   # Input: Sample size per group n1 and n2 ----
+                                                                   sliderInput("n1", "Sample size per group n1:",
+                                                                               min = 1, max = 100,
+                                                                               value = 5, step = 1,
+                                                                               animate = TRUE),
+                                                                   br(),
+                                                                   sliderInput("n2", "Sample size per group n2:",
+                                                                               min = 1, max = 100,
+                                                                               value = 5, step = 1,
+                                                                               animate = TRUE)
+                                                          ),
+                                                          tabPanel("PPCCA",fileInput("main_file", h4("File input:", bsButton("sample2_data_tooltip", label = "",
+                                                                                                                             icon = icon("question"), size = "extra-small")),
+                                                                                     multiple = F, accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"),
+                                                                                     placeholder = "Enter Metabolomic Data Here"),
+                                                                   bsPopover("sample2_data_tooltip", title="",
+                                                                             content="Please make sure: rows are samples/observations, columns are spectral bins",
+                                                                             trigger = "hover"),
+
+                                                                   # tags$hr(),
+                                                                   h4(helpText("Is there a header in the data?")),
+                                                                   checkboxInput(inputId = 'header', label = 'Tick for Yes', value = TRUE),
+
+                                                                   radioButtons(inputId = 'sep', label = h4(helpText("How is the data separated?")),
+                                                                                inline = TRUE, choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
+
+                                                                   h4(helpText("Enter Desired Scaling:", bsButton("scale2_type_sample_tooltip", label = "",
+                                                                                                                  icon = icon("question"), size = "extra-small"))),
+                                                                   bsPopover("scale2_type_sample_tooltip", title="Types of Scaling",
+                                                                             content="Choosing any scale will pre-process the data by the given formula. Further details on Guide Tab.",
+                                                                             trigger = "hover"),
+                                                                   radioButtons(inputId = 'scale', label = NULL,
+                                                                                choiceNames =  c("None", 'PQN Scale',
+                                                                                                 "Auto Scale \\(\\quad\\) \\(\\frac{x-\\mu}{\\sigma}\\)",
+                                                                                                 "Pareto Scale \\(\\space\\) \\(\\frac{x-\\mu}{\\sqrt{\\sigma}}\\)",
+                                                                                                 "Range Scale \\(\\space\\) \\(\\frac{x-\\mu}{x_{max} - x_{min}}\\)",
+                                                                                                 "Vast Scale \\(\\quad\\) \\(\\frac{x-\\mu}{\\sigma}(\\frac{\\mu}{\\sigma}\\))"),
+                                                                                choiceValues = c('none', 'PQN', 'autoscale', 'paretoscale', 'rangescale', 'vastscale'),
+                                                                                selected = 'none'),
+                                                                   div(helpText("*μ is the column mean value while σ is the standard deviation"), style = "font-size:80%"),
+
+
+                                                                   h5("1.Please Select Input Values:",align="centre"),
+                                                                   # Input: Spectral Bins ----
+                                                                   sliderInput("bins", "Spectral Bins:",
+                                                                               min = 50, max = 200,
+                                                                               value = 500,animate = TRUE),
+                                                                   br(),
+                                                                   # Input: Proportion of significant bins (m) ----
+                                                                   sliderInput("sig.bins", "Proportion of significant bins (m):",
+                                                                               min = 0.1, max = 1,
+                                                                               value = 0.5, step = 0.05,animate = TRUE),
+                                                                   br(),
+                                                                   # Input: Target FDR ----
+                                                                   sliderInput("target.fdr", "Target FDR:",
+                                                                               min = 0.01, max=0.2,
+                                                                               step = 0.01,animate = TRUE,value = 0.05),
+
+                                                                   h5("2. To investigate the impact of 'm' on FDR please choose:",align="centre"),
+                                                                   # Input: Sample size per group n1 and n2 ----
+                                                                   sliderInput("n1", "Sample size per group n1:",
+                                                                               min = 1, max = 100,
+                                                                               value = 5, step = 1,
+                                                                               animate = TRUE),
+                                                                   br(),
+                                                                   sliderInput("n2", "Sample size per group n2:",
+                                                                               min = 1, max = 100,
+                                                                               value = 5, step = 1,
+                                                                               animate = TRUE)
+
+                                                          ))
                                  ),
+                                 # Main panel for displaying outputs ----
+                                 mainPanel(
+                                   conditionalPanel(condition="input.sample_size_tab=='PPCA'",
+
+                                                    tabsetPanel(id="sample_tabs",
+                                                                tabPanel("Description", value = "Sample_PPCA_description",
+                                                                         br(),
+                                                                         bsCollapse(id = "PPCA_desc", open = "Sample Size Estimation using PPCA Usage Guide",
+                                                                                    bsCollapsePanel("Sample Size Estimation using PPCA Usage Guide",
+
+                                                                                                    includeHTML("Sample_size_PPCA_desc_ug.html"),
+                                                                                                    style = "primary"),
+                                                                                    bsCollapsePanel("Sample Size Estimation using PPCA Conceptual Explanation",
+
+                                                                                                    includeHTML("Sample_size_PPCA_desc_ce.html"),
+                                                                                                    style = "info"),
+                                                                                    bsCollapsePanel("Sample Size Estimation using PPCA Technical Details",
+
+                                                                                                    includeHTML("Sample_size_PPCA_desc_td.html"),
+                                                                                                    style = "info")
+                                                                         )
+
+                                                                ),
+                                                                tabPanel("Values",tableOutput("values"),br(),useShinyalert(),h5("Click Calculate button after selecting the desired inputs!!"),actionButton("button", "Calculate")),
+                                                                tabPanel("Sample Size Estimation",addSpinner(plotOutput("met1"), spin = "circle", color = "#E41A1C")),
+                                                                tabPanel("Varying the significant bins",addSpinner(plotOutput("met2"), spin = "circle", color = "#E41A1C")))
+
+                                   ),
+                                   conditionalPanel(condition="input.sample_size_tab=='PPCCA'",
+                                                    #tabsetPanel(id = "ppcca_tabs",
+                                                    tabsetPanel(id="sample_tabs",
+                                                                tabPanel("Description", value = "Sample_PPCA_description",
+                                                                         br(),
+                                                                         bsCollapse(id = "PPCA_desc", open = "Sample Size Estimation using PPCCA Usage Guide",
+                                                                                    bsCollapsePanel("Sample Size Estimation using PPCCA Usage Guide",
+
+                                                                                                    includeHTML("Sample_size_PPCCA_desc_ug.html"),
+                                                                                                    style = "primary"),
+                                                                                    bsCollapsePanel("Sample Size Estimation using PPCCA Conceptual Explanation",
+
+                                                                                                    includeHTML("Sample_size_PPCCA_desc_ce.html"),
+                                                                                                    style = "info"),
+                                                                                    bsCollapsePanel("Sample Size Estimation using PPCCA Technical Details",
+
+                                                                                                    includeHTML("Sample_size_PPCCA_desc_td.html"),
+                                                                                                    style = "info")
+                                                                         )
+
+                                                                ),
+                                                                tabPanel("Values"),
+                                                                tabPanel("Sample Size Estimation"),
+                                                                tabPanel("Varying the significant bins"))
+                                   )
+                                   ,
+                                 )
                         )
              ),
 

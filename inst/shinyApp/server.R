@@ -71,8 +71,8 @@ shinyServer(function(input, output, session) {
         main_columns <- main_columns[main_columns!=input$PPCA_label_slider] # remove label
         main_columns <- main_columns[!main_columns %in% as.numeric(unlist(strsplit(input$PPCA_ignore_column, ",")))] # remove ignore by col number
         if(input$PPCA_scale=='PQN'){
-            a<-scale_data(original_data()[, main_columns],"PQN")
-            b<-as.data.frame(a$newXtrain)
+            return(norm(original_data()[, main_columns]))
+
         }
         else
             apply(original_data()[, main_columns], 2,function (y) scale_data(y,input$PPCA_scale))
@@ -888,6 +888,144 @@ shinyServer(function(input, output, session) {
         plot(dppca_output$lmm)
     })
 
+   # Sample Size Estimation---------------------------------------------------
+
+    # Reactive expression to create data frame of all input values ----
+    sliderValues <- reactive({
+
+      data.frame(
+        Name = c("Spectral Bins",
+                 "Proportion of significant bins (m)",
+                 "Target FDR"),
+        Value = as.character(c(input$bins,
+                               input$sig.bins,
+                               input$target.fdr)),
+        stringsAsFactors = FALSE)
+
+    })
+
+    # Show the values in an HTML table ----
+    output$values <- renderTable({
+      input$button
+      isolate(sliderValues())
+    })
+
+    sample_data <- reactive({
+      file1 <- input$sample_file
+      if(is.null(file1)){return(scale_data(default_urine_data,input$scale))}
+      ori_data <- read.table(file=file1$datapath, sep=input$sep, header = input$header, check.names = F)
+      updateSliderInput(session, "cov_slider", max = ceiling(ncol(ori_data)/10))
+      ori_data_rows <- nrow(ori_data)
+      updateSliderInput(session, "bootstrap_n_slider", min = ori_data_rows, value = ori_data_rows)
+      apply(ori_data,2,function (y) scale_data(y,input$scale))
+    })
+
+    p<-reactive({
+      input$bins
+    })
+
+    prop<-reactive({
+      input$sig.bins
+    })
+    target.fdr<-reactive({
+      input$target.fdr
+    })
+
+    n1<-reactive({
+      input$n1
+    })
+
+    n2<-reactive({
+      input$n2
+    })
+    plot.prop<-reactive({
+      input$graphtype
+    })
+
+    global <- reactiveValues(response = FALSE)
+
+    mett<-function(){
+      if(global$response==T){
+        metsize(pilot=sample_data(), n1(), n2(), p(), prop(), plot.prop=F,target.fdr())
+      }
+      else return(NULL)
+    }
+
+
+    metf<-function(){
+      if(global$response==T){
+        metsize(pilot=sample_data(), n1(), n2(), p(), prop(), plot.prop=T,target.fdr())
+      }
+      else return(NULL)
+    }
+
+
+    output$met1<-renderPlot({
+      input$button
+      isolate(if(global$response==T){
+        # Create 0-row data frame which will be used to store data
+        dat <- data.frame(x = numeric(0), y = numeric(0))
+
+        withProgress(message = 'Making plot', value = 0, {
+          # Number of times we'll go through the loop
+          n <- 10
+
+          for (i in 1:n) {
+            # Each time through the loop, add another row of data. This is
+            # a stand-in for a long-running computation.
+            dat <- rbind(dat, data.frame(x = rnorm(1), y = rnorm(1)))
+
+            # Increment the progress bar, and update the detail text.
+            incProgress(1/n, detail = paste("Doing part", i))
+
+            # Pause for 0.1 seconds to simulate a long computation.
+            Sys.sleep(0.1)
+          }
+          mett()
+        })
+      } else  return(NULL)
+
+      )
+    })
+
+    output$met2<-renderPlot({
+      input$button
+      isolate(if(global$response==T){
+        # Create 0-row data frame which will be used to store data
+        dat <- data.frame(x = numeric(0), y = numeric(0))
+
+        withProgress(message = 'Making plot', value = 0, {
+          # Number of times we'll go through the loop
+          n <- 10
+
+          for (i in 1:n) {
+            # Each time through the loop, add another row of data. This is
+            # a stand-in for a long-running computation.
+            dat <- rbind(dat, data.frame(x = rnorm(1), y = rnorm(1)))
+
+            # Increment the progress bar, and update the detail text.
+            incProgress(1/n, detail = paste("Doing part", i))
+
+            # Pause for 0.1 seconds to simulate a long computation.
+            Sys.sleep(0.1)
+          }
+          metf()
+        })
+      } else  return(NULL)
+
+      )
+    })
+
+    observeEvent(input$button, {
+      # Show a modal when the button is pressed
+      shinyalert("calculating.....please wait", type = "info",showConfirmButton = TRUE,
+                 showCancelButton = TRUE,
+                 confirmButtonText = "OK",
+                 cancelButtonText = "Cancel",callbackR = function(x) {
+                   global$response <- x
+                 }
+      )
+    })
 
     # Guides ------------------------------------------------------------------
 
