@@ -851,6 +851,7 @@ shinyServer(function(input, output, session) {
     # LMM Results Tab plots
     observeEvent(input$DPPCA_submit_LMM_btn,
                  isolate({
+
                      ### Removing pre-run results
                      hide(id = "Pre-run_results_warning2")
                      output$DPPCA_LMM_summary <- renderPrint({
@@ -858,7 +859,7 @@ shinyServer(function(input, output, session) {
                      })
                      output$DPPCA_plot_LMM_fit <- renderPlot({
                          NULL
-                     })
+                     })###
 
                      showNotification("Running DPPCA_LMM...", duration = NULL, id = "dppca_lmm_progress",
                                       closeButton = FALSE, type = "message")
@@ -866,8 +867,16 @@ shinyServer(function(input, output, session) {
                      lmm_results <- fit_LMMs(DPPCA_top(), alpha = input$DPPCA_LMM_cred_int,
                                              data = DPPCA_spectral_data_list())
 
+
                      ### Removing pre-run results
                      dppca_output$lmm <- lmm_results
+                     output$DPPCA_LMM_summary <- renderPrint({
+                       summary(dppca_output$lmm)
+                     })
+                     output$DPPCA_plot_LMM_fit <- renderPlot({
+                       plot(dppca_output$lmm)
+                     })###
+
 
                      on.exit(removeNotification("dppca_lmm_progress"), add = TRUE)
                  })
@@ -878,7 +887,6 @@ shinyServer(function(input, output, session) {
     output$DPPCA_plot_LMM_fit <- renderPlot({
         plot(dppca_output$lmm)
     })
-
 
 
     # Guides ------------------------------------------------------------------
