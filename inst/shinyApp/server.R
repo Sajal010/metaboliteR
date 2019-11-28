@@ -71,8 +71,8 @@ shinyServer(function(input, output, session) {
         main_columns <- main_columns[main_columns!=input$PPCA_label_slider] # remove label
         main_columns <- main_columns[!main_columns %in% as.numeric(unlist(strsplit(input$PPCA_ignore_column, ",")))] # remove ignore by col number
         if(input$PPCA_scale=='PQN'){
-            a<-scale_data(original_data()[, main_columns],"PQN")
-            b<-as.data.frame(a$newXtrain)
+            return(norm(original_data()[, main_columns]))
+
         }
         else
             apply(original_data()[, main_columns], 2,function (y) scale_data(y,input$PPCA_scale))
