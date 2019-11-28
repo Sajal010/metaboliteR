@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>MathJax example</title>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+  </script>
+</head>
+
+<body>
+
+<h3 style="text-align: center;">&nbsp;<strong>Sample Size Estimation using PPCA Analysis</strong></h3>
+<div>
+<h4><strong>Usage Guide:</strong></h4>
+<p><span style="color: #ff6600;">In order to estimate Sample Size using PPCA on your data, you need to:</span></p>
+<ol>
+<li><span style="color: #ff6600;">Specify the scaling type in the sidebar on the left</span></li>
+<li><span style="color: #ff6600;">After selecting the scaling type, you can now specify the model parameters and click the 'calculate' button and verify the entered model parameters in 'Values' tab besides 'Descrition' tab..</span></li>
+<li><span style="color: #ff6600;">Once the model finishes running, plots for "Sample Size Estimation"" and "Varying the Significant bins"" will appear besides 'Values' tab.</span></li>
+</ol>
+<p>There are a few parameters which can be tune according to interest:</p>
+<ol>
+<li> Spectral Bins (i.e. 1 to 1000) - </li>
+<li>Proportion of significant bins (i.e. 0.1 to 1) - Expected proportion 'm' of significant metabolites.</li>
+<li>Target FDR (i.e. 0.01 to 0.2)- Desired level of FDR.</li>
+<li>To investigate the impact of 'proportion of significant bins'(m) on FDR:
+<ul>
+      <li>Sample size for group 'n1'</li>
+      <li>Sample size for group 'n2'</li>
+</ul>
+</li>
+</ol>
+</div>
+
+</body>
+</html>
