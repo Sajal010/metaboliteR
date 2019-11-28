@@ -879,6 +879,8 @@ shinyServer(function(input, output, session) {
         plot(dppca_output$lmm)
     })
 
+   # Sample Size Estimation---------------------------------------------------
+
     # Reactive expression to create data frame of all input values ----
     sliderValues <- reactive({
 
@@ -901,12 +903,12 @@ shinyServer(function(input, output, session) {
 
     sample_data <- reactive({
       file1 <- input$sample_file
-      if(is.null(file1)){return(default_urine_data)}
+      if(is.null(file1)){return(scale_data(default_urine_data,input$scale))}
       ori_data <- read.table(file=file1$datapath, sep=input$sep, header = input$header, check.names = F)
       updateSliderInput(session, "cov_slider", max = ceiling(ncol(ori_data)/10))
       ori_data_rows <- nrow(ori_data)
       updateSliderInput(session, "bootstrap_n_slider", min = ori_data_rows, value = ori_data_rows)
-      ori_data
+      apply(ori_data,2,function (y) scale_data(y,input$scale))
     })
 
     p<-reactive({

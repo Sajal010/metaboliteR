@@ -334,3 +334,4 @@ metsize<-function(pilot=pilot, n1=5, n2=5, p=300, prop=0.25,  plot.prop, target.
   }
   return(list(nhat=n_values, results_sim = results_sim, results_prop = results_prop, p=p, prop=prop,  n1=n1, n2=n2, target.fdr = target.fdr))
 }#End of metsize function
+
