@@ -3,8 +3,7 @@ library(shinyBS)
 library(shinythemes)
 library(shinyjs)
 library(metaboliteR)
-library(shinyalert)
-library(shinyWidgets)
+library(Rcpp)
 
 shinyUI(ui = tagList(
   # Color error output red
@@ -156,7 +155,7 @@ shinyUI(ui = tagList(
                                                                helpText("When covariates are selected, they will appear in the 'Covariates Data' tab"),
                                                                sliderInput("PPCA_label_slider", h4("Group Labels Column:"), 0, 10, 0),
                                                                helpText("When group labels are selected, they will appear in the 'Group Labels' tab"),
-                                                               textInput("PPCA_ignore_column", h4("Columns Ignored from Spectral Data:"), "", placeholder="Column number/names (e.g: 2,3,5 or 9.98,9.94,9.86)"),
+                                                               textInput("PPCA_ignore_column", h4("Columns Ignored for Spectral Data:"), "", placeholder="Column number/names (e.g: 2,3,5 or 9.98,9.94,9.86)"),
 
                                                                h4(helpText("Enter Desired Scaling:", bsButton("PPCA_scale_type_tooltip", label = "",
                                                                                                               icon = icon("question"), size = "extra-small"))),
@@ -369,7 +368,7 @@ shinyUI(ui = tagList(
 
                                                                sliderInput("MPPCA_label_slider", h4("Group Labels Column:"), 0, 10, 0),
                                                                helpText("When group labels are selected, they will appear in the 'Group Labels' tab"),
-                                                               textInput("MPPCA_ignore_column", h4("Columns Ignored from Spectral Data:"), "", placeholder="Column number/names (e.g: 2,3,5 or 9.98,9.94,9.86)"),
+                                                               textInput("MPPCA_ignore_column", h4("Columns Ignored for Spectral Data:"), "", placeholder="Column number/names (e.g: 2,3,5 or 9.98,9.94,9.86)"),
 
                                                                h4(helpText("Enter Desired Scaling:", bsButton("MPPCA_scale_type_tooltip", label = "",
                                                                                                               icon = icon("question"), size = "extra-small"))),
@@ -596,7 +595,7 @@ shinyUI(ui = tagList(
 
                                                                sliderInput("DPPCA_label_slider", h4("Group Labels Column:"), 0, 10, 4),
                                                                helpText("When group labels are selected, they will appear in the 'Group Labels' tab"),
-                                                               textInput("DPPCA_ignore_column", h4("Columns Ignored from Spectral Data:"),
+                                                               textInput("DPPCA_ignore_column", h4("Columns Ignored for Spectral Data:"),
                                                                          value = "1,2",
                                                                          placeholder="Column number/names (e.g: 2,3,5 or 9.98,9.94,9.86)"),
 
@@ -755,7 +754,7 @@ shinyUI(ui = tagList(
                                                 #DPPCA_data_tabs li:nth-child(3) {float:right}
                                                 #DPPCA_data_tabs li > a[data-value='DPPCA_original_data_table']{background-color:lightgrey}
                                                         ")),
-                                           tabsetPanel(id = "DPPCA_plot_tabs",
+                                           tabsetPanel(id = "DPPCA_plot_tabs", selected = "DPPCA_description",
                                                        tabPanel("DPPCA data", value = "DPPCA_data",
                                                                 br(),
                                                                 tabsetPanel(id = "DPPCA_data_tabs",
@@ -831,218 +830,186 @@ shinyUI(ui = tagList(
              ),
 
 
-             ### Sample Size Estimation --------------------------------------------------
+
+             # Sample Size Estimation --------------------------------------------------
              navbarMenu("Sample Size Estimation",
 
-                        ### Sample Size Estimation --------------------------------------------------
-                        tabPanel("Sample Size Estimation",
+                        # for ppca ----------------------------------------------------------------
+                        tabPanel("For PPCA/PPCCA",
 
                                  sidebarPanel(width = 3,
-                                              tabsetPanel(id = "sample_size_tab",
-                                                          tabPanel("PPCA",
+
+                                              conditionalPanel(condition="input.sample_size_PPCA_tab=='sample_size_PPCA_pilot_data'",
+
+                                                               actionButton("sample_size_PPCA_parameter_button", "Go to Model Settings",
+                                                                            width = "100%", class = "btn-default"),
+
+                                                               fileInput("sample_size_PPCA_pilot_data", h4("File input:", bsButton("sample_size_PPCA_pilot_data_tooltip", label = "",
+                                                                                                                                   icon = icon("question"), size = "extra-small")),
+                                                                         multiple = F, accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"),
+                                                                         placeholder = "Enter Metabolomic Data Here"),
+                                                               bsPopover("sample_size_PPCA_pilot_data_tooltip", title="",
+                                                                         content="Please make sure: rows are samples/observations, columns are spectral bins",
+                                                                         trigger = "hover"),
+
+                                                               # tags$hr(),
+                                                               h4(helpText("Is there a header in the data?")),
+                                                               checkboxInput(inputId = 'sample_size_PPCA_header', label = 'Tick for Yes', value = TRUE),
+
+                                                               radioButtons(inputId = 'sample_size_PPCA_sep', label = h4(helpText("How is the data separated?")),
+                                                                            inline = TRUE, choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
+
+                                                               sliderInput("sample_size_PPCA_cov_slider", h4("Covariates Columns:"), 0, 10, c(0,0)),
+                                                               helpText("When covariates are selected, they will appear in the 'Covariates Data' tab"),
+                                                               # sliderInput("sample_size_PPCA_label_slider", h4("Group Labels Column:"), 0, 10, 0),
+                                                               # helpText("When group labels are selected, they will appear in the 'Group Labels' tab"),
+                                                               textInput("sample_size_PPCA_ignore_column", h4("Columns Ignored for Spectral Data:"), "", placeholder="Column number/names (e.g: 2,3,5 or 9.98,9.94,9.86)"),
 
 
-                                                                   fileInput("main_file", h4("File input:", bsButton("sample_data_tooltip", label = "",
-                                                                                                                     icon = icon("question"), size = "extra-small")),
-                                                                             multiple = F, accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"),
-                                                                             placeholder = "Enter Metabolomic Data Here"),
-                                                                   bsPopover("sample_data_tooltip", title="",
-                                                                             content="Please make sure: rows are samples/observations, columns are spectral bins",
-                                                                             trigger = "hover"),
+                                                               h4(helpText("Enter Desired Scaling:", bsButton("scale_type_sample_PPCA_tooltip", label = "",
+                                                                                                              icon = icon("question"), size = "extra-small"))),
+                                                               bsPopover("scale_type_sample_PPCA_tooltip", title="Types of Scaling",
+                                                                         content="Choosing any scale will pre-process the data by the given formula. Further details on Guide Tab.",
+                                                                         trigger = "hover"),
+                                                               radioButtons(inputId = 'sample_size_PPCA_scale', label = NULL,
+                                                                            choiceNames =  c("None", 'PQN Scale',
+                                                                                             "Auto Scale \\(\\quad\\) \\(\\frac{x-\\mu}{\\sigma}\\)",
+                                                                                             "Pareto Scale \\(\\space\\) \\(\\frac{x-\\mu}{\\sqrt{\\sigma}}\\)",
+                                                                                             "Range Scale \\(\\space\\) \\(\\frac{x-\\mu}{x_{max} - x_{min}}\\)",
+                                                                                             "Vast Scale \\(\\quad\\) \\(\\frac{x-\\mu}{\\sigma}(\\frac{\\mu}{\\sigma}\\))"),
+                                                                            choiceValues = c('none', 'PQN', 'autoscale', 'paretoscale', 'rangescale', 'vastscale'),
+                                                                            selected = 'none'),
+                                                               div(helpText("*μ is the column mean value while σ is the standard deviation"), style = "font-size:80%")
+                                              ),
 
-                                                                   # tags$hr(),
-                                                                   h4(helpText("Is there a header in the data?")),
-                                                                   checkboxInput(inputId = 'header', label = 'Tick for Yes', value = TRUE),
+                                              conditionalPanel(condition="input.sample_size_PPCA_tab=='sample_size_PPCA_description'",
 
-                                                                   radioButtons(inputId = 'sep', label = h4(helpText("How is the data separated?")),
-                                                                                inline = TRUE, choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
-                                                                   h4(helpText("Enter Desired Scaling:", bsButton("scale_type_sample_tooltip", label = "",
-                                                                                                                  icon = icon("question"), size = "extra-small"))),
-                                                                   bsPopover("scale_type_sample_tooltip", title="Types of Scaling",
-                                                                             content="Choosing any scale will pre-process the data by the given formula. Further details on Guide Tab.",
-                                                                             trigger = "hover"),
-                                                                   radioButtons(inputId = 'scale', label = NULL,
-                                                                                choiceNames =  c("None", 'PQN Scale',
-                                                                                                 "Auto Scale \\(\\quad\\) \\(\\frac{x-\\mu}{\\sigma}\\)",
-                                                                                                 "Pareto Scale \\(\\space\\) \\(\\frac{x-\\mu}{\\sqrt{\\sigma}}\\)",
-                                                                                                 "Range Scale \\(\\space\\) \\(\\frac{x-\\mu}{x_{max} - x_{min}}\\)",
-                                                                                                 "Vast Scale \\(\\quad\\) \\(\\frac{x-\\mu}{\\sigma}(\\frac{\\mu}{\\sigma}\\))"),
-                                                                                choiceValues = c('none', 'PQN', 'autoscale', 'paretoscale', 'rangescale', 'vastscale'),
-                                                                                selected = 'none'),
-                                                                   div(helpText("*μ is the column mean value while σ is the standard deviation"), style = "font-size:80%"),
+                                                               actionButton("sample_size_PPCA_pilot_data_button", "Go to Pilot Data",
+                                                                            width = "100%", class = "btn-default"),
 
-                                                                   h5("1.Please Select Input Values:",align="centre"),
-                                                                   # Input: Spectral Bins ----
-                                                                   sliderInput("bins", "Spectral Bins:",
-                                                                               min = 50, max = 200,
-                                                                               value = 500,animate = TRUE),
-                                                                   br(),
-                                                                   # Input: Proportion of significant bins (m) ----
-                                                                   sliderInput("sig.bins", "Proportion of significant bins (m):",
-                                                                               min = 0.1, max = 1,
-                                                                               value = 0.5, step = 0.05,animate = TRUE),
-                                                                   br(),
-                                                                   # Input: Target FDR ----
-                                                                   sliderInput("target.fdr", "Target FDR:",
-                                                                               min = 0.01, max=0.2,
-                                                                               step = 0.01,animate = TRUE,value = 0.05),
+                                                               h4(helpText("Sample Size Estimation Parameters:")),
+                                                               hr(),
 
-                                                                   h5("2. To investigate the impact of 'm' on FDR please choose:",align="centre"),
-                                                                   # Input: Sample size per group n1 and n2 ----
-                                                                   sliderInput("n1", "Sample size per group n1:",
-                                                                               min = 1, max = 100,
-                                                                               value = 5, step = 1,
-                                                                               animate = TRUE),
-                                                                   br(),
-                                                                   sliderInput("n2", "Sample size per group n2:",
-                                                                               min = 1, max = 100,
-                                                                               value = 5, step = 1,
-                                                                               animate = TRUE)
-                                                          ),
-                                                          tabPanel("PPCCA",fileInput("main_file", h4("File input:", bsButton("sample2_data_tooltip", label = "",
-                                                                                                                             icon = icon("question"), size = "extra-small")),
-                                                                                     multiple = F, accept = c("text/csv", "text/comma-separated-values, text/plain", ".csv"),
-                                                                                     placeholder = "Enter Metabolomic Data Here"),
-                                                                   bsPopover("sample2_data_tooltip", title="",
-                                                                             content="Please make sure: rows are samples/observations, columns are spectral bins",
-                                                                             trigger = "hover"),
-
-                                                                   # tags$hr(),
-                                                                   h4(helpText("Is there a header in the data?")),
-                                                                   checkboxInput(inputId = 'header', label = 'Tick for Yes', value = TRUE),
-
-                                                                   radioButtons(inputId = 'sep', label = h4(helpText("How is the data separated?")),
-                                                                                inline = TRUE, choices = c(Comma=',',Semicolon=';',Tab='\t', Space=''), selected = ','),
-
-                                                                   h4(helpText("Enter Desired Scaling:", bsButton("scale2_type_sample_tooltip", label = "",
-                                                                                                                  icon = icon("question"), size = "extra-small"))),
-                                                                   bsPopover("scale2_type_sample_tooltip", title="Types of Scaling",
-                                                                             content="Choosing any scale will pre-process the data by the given formula. Further details on Guide Tab.",
-                                                                             trigger = "hover"),
-                                                                   radioButtons(inputId = 'scale', label = NULL,
-                                                                                choiceNames =  c("None", 'PQN Scale',
-                                                                                                 "Auto Scale \\(\\quad\\) \\(\\frac{x-\\mu}{\\sigma}\\)",
-                                                                                                 "Pareto Scale \\(\\space\\) \\(\\frac{x-\\mu}{\\sqrt{\\sigma}}\\)",
-                                                                                                 "Range Scale \\(\\space\\) \\(\\frac{x-\\mu}{x_{max} - x_{min}}\\)",
-                                                                                                 "Vast Scale \\(\\quad\\) \\(\\frac{x-\\mu}{\\sigma}(\\frac{\\mu}{\\sigma}\\))"),
-                                                                                choiceValues = c('none', 'PQN', 'autoscale', 'paretoscale', 'rangescale', 'vastscale'),
-                                                                                selected = 'none'),
-                                                                   div(helpText("*μ is the column mean value while σ is the standard deviation"), style = "font-size:80%"),
+                                                               h4("Do you want to include Pilot Data?"),
+                                                               checkboxInput(inputId = 'sample_size_PPCA_pilot_check', label = 'Tick for Yes', value = TRUE),
 
 
-                                                                   h5("1.Please Select Input Values:",align="centre"),
-                                                                   # Input: Spectral Bins ----
-                                                                   sliderInput("bins", "Spectral Bins:",
-                                                                               min = 50, max = 200,
-                                                                               value = 500,animate = TRUE),
-                                                                   br(),
-                                                                   # Input: Proportion of significant bins (m) ----
-                                                                   sliderInput("sig.bins", "Proportion of significant bins (m):",
-                                                                               min = 0.1, max = 1,
-                                                                               value = 0.5, step = 0.05,animate = TRUE),
-                                                                   br(),
-                                                                   # Input: Target FDR ----
-                                                                   sliderInput("target.fdr", "Target FDR:",
-                                                                               min = 0.01, max=0.2,
-                                                                               step = 0.01,animate = TRUE,value = 0.05),
+                                                               h4("Do you want to include", span("Covariates?", style="color:blue")),
+                                                               checkboxInput(inputId = 'sample_size_PPCA_covariates_check', label = span('Tick for Yes', style="color:blue", title = "Please make sure covariates data are selected in Data tabs to enable this selection"), value = FALSE),
 
-                                                                   h5("2. To investigate the impact of 'm' on FDR please choose:",align="centre"),
-                                                                   # Input: Sample size per group n1 and n2 ----
-                                                                   sliderInput("n1", "Sample size per group n1:",
-                                                                               min = 1, max = 100,
-                                                                               value = 5, step = 1,
-                                                                               animate = TRUE),
-                                                                   br(),
-                                                                   sliderInput("n2", "Sample size per group n2:",
-                                                                               min = 1, max = 100,
-                                                                               value = 5, step = 1,
-                                                                               animate = TRUE)
 
-                                                          ))
+                                                               # Input: Spectral Bins
+                                                               sliderInput("sample_size_PPCA_n_bins", h4("Number of Spectral Bins:"),
+                                                                           min = 50, max = 400, value = 100),
+
+                                                               # Input: Proportion of significant bins (m)
+                                                               sliderInput("sample_size_PPCA_prop_sig_bins", h4("Proportion of Significant Bins (m):"),
+                                                                           min = 0.1, max = 1, value = 0.5, step = 0.05),
+
+                                                               # Input: Target FDR
+                                                               sliderInput("sample_size_PPCA_target_fdr", h4("Target FDR:"),
+                                                                           min = 0.01, max = 0.2, step = 0.01, value = 0.05),
+
+                                                               h4(helpText(tags$u("To investigate the impact of 'm' on FDR please choose:"))),
+
+                                                               # Input: Sample size per group n1 and n2
+                                                               sliderInput("sample_size_PPCA_n1", h4("Group 1 Sample Size:"),
+                                                                           min = 1, max = 100, value = 5, step = 1),
+                                                               sliderInput("sample_size_PPCA_n2", h4("Group 2 Sample Size:"),
+                                                                           min = 1, max = 100, value = 5, step = 1),
+
+                                                               actionButton("sample_size_PPCA_submit_button", "Calculate Sample Size", class = "btn-primary")
+                                              ),
+                                              conditionalPanel(condition="input.sample_size_PPCA_tab!='sample_size_PPCA_pilot_data' & input.sample_size_PPCA_tab!='sample_size_PPCA_description'",
+
+                                                               actionButton("sample_size_PPCA_return_param_button", "Return to Estimation Parameters",
+                                                                            width = "100%", class = "btn-default"),
+                                                               h4("Parameters Used:"),
+                                                               tableOutput("estimation_parameter_PPCA_report"),
+                                              ),
                                  ),
-                                 # Main panel for displaying outputs ----
+
                                  mainPanel(
-                                   conditionalPanel(condition="input.sample_size_tab=='PPCA'",
+                                   # Style for data tabs
+                                   tags$style(HTML("
+                                                .tabbable > .nav > li > a[data-value='sample_size_PPCA_spectral'] {background-color:yellow}
+                                                .tabbable > .nav > li > a[data-value='sample_size_PPCA_covariates'] {background-color:yellow; color:blue}
+                                                # .tabbable > .nav > li > a[data-value='PPCA_labels'] {background-color:yellow}
+                                                .tabbable > .nav > li[class=active] > a {background-color:grey; color:white}
+                                                          ")),
 
-                                                    tabsetPanel(id="sample_tabs",
-                                                                tabPanel("Description", value = "Sample_PPCA_description",
-                                                                         br(),
-                                                                         bsCollapse(id = "PPCA_desc", open = "Sample Size Estimation using PPCA Usage Guide",
-                                                                                    bsCollapsePanel("Sample Size Estimation using PPCA Usage Guide",
+                                   tabsetPanel(id="sample_size_PPCA_tab",
+                                               tabPanel("Pilot data", value = "sample_size_PPCA_pilot_data",
+                                                        br(),
+                                                        tabsetPanel(id = "sample_size_PPCA_data_tabs",
+                                                                    tabPanel(span("Spectral Data", title="Data from NMR or Mass Spectroscopy (MS)"),
+                                                                             value = 'sample_size_PPCA_spectral',
+                                                                             strong(h3(textOutput("sample_size_PPCA_spectral_file_name"))),
+                                                                             dataTableOutput("sample_size_PPCA_spectral_data_table"),
+                                                                    ),
+                                                                    tabPanel(span("Covariates Data", title="Sample attributes (eg: weight, gender, regions, etc)"),
+                                                                             value = 'sample_size_PPCA_covariates',
+                                                                             # h3(textOutput("PPCA_spectral_file_name")),
+                                                                             dataTableOutput("sample_size_PPCA_covariates_data_table")
+                                                                    )
+                                                                    # tabPanel(span("Group Labels", title="This data is used for colours in plots (eg: Treatment group vs Control group)"),
+                                                                    #          value = 'sample_size_PPCA_labels',
+                                                                    #          # h3(textOutput("PPCA_spectral_file_name")),
+                                                                    #          dataTableOutput("PPCA_labels_data_table")
+                                                                    # )
+                                                        )
+                                               ),
+                                               tabPanel("Description", value = "sample_size_PPCA_description",
+                                                        br(),
+                                                        bsCollapse(id = "sample_size_PPCA_desc", open = "Sample Size Estimation using PPCA Usage Guide",
+                                                                   bsCollapsePanel("Sample Size Estimation using PPCA Usage Guide",
 
-                                                                                                    includeHTML("Sample_size_PPCA_desc_ug.html"),
-                                                                                                    style = "primary"),
-                                                                                    bsCollapsePanel("Sample Size Estimation using PPCA Conceptual Explanation",
+                                                                                   includeHTML("Sample_size_PPCA_desc_ug.html"),
+                                                                                   style = "primary")
+                                                                   # bsCollapsePanel("Sample Size Estimation using PPCA Conceptual Explanation",
+                                                                   #
+                                                                   #                 includeHTML("Sample_size_PPCA_desc_ce.html"),
+                                                                   #                 style = "info"),
+                                                                   # bsCollapsePanel("Sample Size Estimation using PPCA Technical Details",
+                                                                   #
+                                                                   #                 includeHTML("Sample_size_PPCA_desc_td.html"),
+                                                                   #                 style = "info")
+                                                        )
 
-                                                                                                    includeHTML("Sample_size_PPCA_desc_ce.html"),
-                                                                                                    style = "info"),
-                                                                                    bsCollapsePanel("Sample Size Estimation using PPCA Technical Details",
-
-                                                                                                    includeHTML("Sample_size_PPCA_desc_td.html"),
-                                                                                                    style = "info")
-                                                                         )
-
-                                                                ),
-                                                                tabPanel("Values",tableOutput("values"),br(),useShinyalert(),h5("Click Calculate button after selecting the desired inputs!!"),actionButton("button", "Calculate")),
-                                                                tabPanel("Sample Size Estimation",addSpinner(plotOutput("met1"), spin = "circle", color = "#E41A1C")),
-                                                                tabPanel("Varying the significant bins",addSpinner(plotOutput("met2"), spin = "circle", color = "#E41A1C")))
-
-                                   ),
-                                   conditionalPanel(condition="input.sample_size_tab=='PPCCA'",
-                                                    #tabsetPanel(id = "ppcca_tabs",
-                                                    tabsetPanel(id="sample_tabs",
-                                                                tabPanel("Description", value = "Sample_PPCA_description",
-                                                                         br(),
-                                                                         bsCollapse(id = "PPCA_desc", open = "Sample Size Estimation using PPCCA Usage Guide",
-                                                                                    bsCollapsePanel("Sample Size Estimation using PPCCA Usage Guide",
-
-                                                                                                    includeHTML("Sample_size_PPCCA_desc_ug.html"),
-                                                                                                    style = "primary"),
-                                                                                    bsCollapsePanel("Sample Size Estimation using PPCCA Conceptual Explanation",
-
-                                                                                                    includeHTML("Sample_size_PPCCA_desc_ce.html"),
-                                                                                                    style = "info"),
-                                                                                    bsCollapsePanel("Sample Size Estimation using PPCCA Technical Details",
-
-                                                                                                    includeHTML("Sample_size_PPCCA_desc_td.html"),
-                                                                                                    style = "info")
-                                                                         )
-
-                                                                ),
-                                                                tabPanel("Values"),
-                                                                tabPanel("Sample Size Estimation"),
-                                                                tabPanel("Varying the significant bins"))
+                                               ),
+                                               tabPanel("Sample Size Estimation",  value = "sample_size_PPCA_estimation",
+                                                        plotOutput("sample_size_PPCA_estimate")
+                                               ),
+                                               tabPanel("Varying the Significant Bins",
+                                                        plotOutput("sample_size_PPCA_significant_bins")
+                                               )
                                    )
-                                   ,
                                  )
                         )
              ),
 
 
              # GUIDES ------------------------------------------------------------------
-             tabPanel("Guides", "This panel is intentionally left blank",
-                      mainPanel(width = 9,
-                                tabsetPanel(
-                                  tabPanel("Tab 3", "This panel is intentionally left blank",
-                                           textInput("txt", "Text input:", "general"),
-                                           tags$h5("Default actionButton:"),
-                                           actionButton("action", "Search"),
-
-                                           tags$h5("actionButton with CSS class:"),
-                                           actionButton("action2", "Action button", class = "btn-primary")
-                                  )
-                                ),
-                                verbatimTextOutput("debug")
-                      ),
-             ),
+             # tabPanel("Guides", "This panel is intentionally left blank",
+             #          mainPanel(width = 9,
+             #                    tabsetPanel(
+             #                      tabPanel("Tab 3", "This panel is intentionally left blank",
+             #                               textInput("txt", "Text input:", "general"),
+             #                               tags$h5("Default actionButton:"),
+             #                               actionButton("action", "Search"),
+             #
+             #                               tags$h5("actionButton with CSS class:"),
+             #                               actionButton("action2", "Action button", class = "btn-primary")
+             #                      )
+             #                    ),
+             #                    verbatimTextOutput("debug")
+             #          ),
+             # ),
 
 
              # ABOUT US ----------------------------------------------------------------
              tabPanel("About Us", "This panel is intentionally left blank",
 
-                      selectInput("dataset", label = "Dataset", choices = ls("package:datasets")),
-                      verbatimTextOutput("summary"),
-                      tableOutput("table")
              )
   )
 ))

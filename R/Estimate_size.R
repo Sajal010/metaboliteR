@@ -4,8 +4,6 @@
 PPCAEM = function(X, NComp, tol=.00001, maxits=100, showits=T){
   # Arguments X: numeric data, NComp: number of components
   # tol = tolerance level, maxits: maximum iterations, showits: show iterations
-  require(pracma) # for orthonormal basis of W; pcaMethods package has also
-  require(psych)  # for tr
 
   # starting points and other initializations
   N = nrow(X)
@@ -131,23 +129,23 @@ is.wholenumber <- function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) 
 
 #' Title
 #'
-#' @param pilot
-#' @param n1
-#' @param n2
-#' @param p
-#' @param prop
-#' @param plot.prop
-#' @param target.fdr
+#' @param pilot a
+#' @param n1 a
+#' @param n2 a
+#' @param p a
+#' @param prop a
+#' @param plot.prop a
+#' @param target.fdr a
 #'
-#' @return
+#' @importFrom stats lm median rgamma
+#' @return a
 #' @export
 #'
-#' @examples
 metsize<-function(pilot=pilot, n1=5, n2=5, p=300, prop=0.25,  plot.prop, target.fdr= 0.05)
 {
   if(length(pilot)!=0)
   {
-    resppca<- PPCAEM(X=scale(pilot), NComp=2, tol=1e-20, maxit=100)
+    resppca<- PPCAEM(X=scale(pilot), NComp=2, tol=1e-20, maxits=100)
     W<-resppca$loadings
     sig<-resppca$sigma
     p<-ncol(pilot)

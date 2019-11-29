@@ -8,7 +8,22 @@ metsize(pilot = pilot, n1 = 5, n2 = 5, p = 300, prop = 0.25,
   plot.prop, target.fdr = 0.05)
 }
 \arguments{
-\item{target.fdr}{}
+\item{pilot}{a}
+
+\item{n1}{a}
+
+\item{n2}{a}
+
+\item{p}{a}
+
+\item{prop}{a}
+
+\item{plot.prop}{a}
+
+\item{target.fdr}{a}
+}
+\value{
+a
 }
 \description{
 Title
