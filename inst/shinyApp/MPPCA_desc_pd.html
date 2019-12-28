@@ -14,20 +14,13 @@
 
 <h3 style="text-align: center;">&nbsp;<strong>Mixtures of&nbsp;Probabilistic Principal Component Analysis (MPPCA)</strong></h3>
 <div>
-<h4><strong>Usage Guide:</strong></h4>
-<p><span style="color: #ff6600;">In order to use MPPCA on your data, you need to:</span></p>
-<ol>
-<li><span style="color: #ff6600;">Specify the model parameters in the sidebar on the left</span></li>
-<li><span style="color: #ff6600;">Click the 'SUBMIT PARAMETERS' button for the model to run.</span></li>
-<li><span style="color: #ff6600;">Once the model finishes running, plots will appear under the different plot tabs beside the 'Description' tab.</span></li>
-</ol>
+<h4><strong>Parameters Description:</strong></h4>
 <p>There are a few parameters which can be tune according to interest:</p>
 <ol>
-<li>Range of Groups Estimated (e.g: 1 to 4) -&nbsp;XXXXXXXXXXXXXXXXXXXXXX</li>
+<li>Range of Groups Estimated (e.g: 1 to 4) -&nbsp;This will run 4 MPPCA models with 1, 2, 3, and 4 cluster groups allocated across the data.</li>
 <li>Range of Principal Components (e.g: 1 to 4) - This will run 4 MPPCA models with 1, 2, 3, and 4 PC scores in the model.</li>
 <li>Number of Bootstrap - This quantifies the uncertainty level of the model parameters using the Bootstrap method. Higher number will increase the accuracy of the given uncertainty but at the cost of higher computational running time. The minimum bootstrap run is according to the number of rows in the data.</li>
 <li>Convergence Criterion - The value where it decides that the model has converged. Smaller number will have longer computational time but better accuracy.</li>
-<li>Maximum Number of Iteration - The maximum number of iterations the model runs the EM algorithm before it is terminated regardless of the results.</li>
 </ol>
 </div>
 

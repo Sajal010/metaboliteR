@@ -14,12 +14,13 @@
 
 <h3 style="text-align: center;"><strong>Probabilistic Principal Component Analysis (PPCA)</strong></h3>
 <div>
-<p>PPCA is an extension of the PCA method with probabilistic basis which offers quantification of statistical uncertainty in the model. While PCA uses orthogonal transformation to obtain Principal Components (PC) scores, PPCA assumes a multivariate Gaussian distribution on the Principal Components scores and estimate the model parameter through Expectation-Maximisation (EM) algorithm.&nbsp;</p>
-<p>FURTHER DETAILS</p>
+<p>PPCA is an extension of the PCA method with probabilistic basis which offers quantification of statistical uncertainty in the model. While PCA uses orthogonal transformation to obtain Principal Components (PC) scores, PPCA assumes a multivariate Gaussian distribution on the Principal Components scores and estimate the model parameters through Expectation-Maximisation (EM) algorithm. Instead of mapping high dimensional data space to a low dimensional latent space, PPCA framework is based on a mapping from a latent space to the data space. This means that in theory, the PC scores are first drawed from the multivariate Gaussian distribution and consequently used to generate the observed data.</p>
+<p>For more details on Principal Component Analysis (PCA), click <a href="https://stats.stackexchange.com/questions/2691/making-sense-of-principal-component-analysis-eigenvectors-eigenvalues" target="_blank" rel="noopener">here</a> or <a href="https://www.analyticsvidhya.com/blog/2016/03/practical-guide-principal-component-analysis-python/" target="_blank" rel="noopener">here</a>.</p>
+<p>For more details on PPCA/PPCCA, click <a href="http://hdl.handle.net/10197/2835" target="_blank" rel="noopener">here</a>.</p>
 <p>&nbsp;</p>
-<h3 style="text-align: center;"><strong>Probabilistic Principal Component <span style="color: #0000ff;">and Covariates</span> Analysis (PP<span style="color: #0000ff;">CC</span>A)</strong></h3>
-<p>PPCCA is an extension of PPCA where subject covariates (e.g. weight, groups, age, etc) are accounted for. These covariates may influence the principal subspace and it is of interest to identify how strong their influence are on the observed data point.&nbsp;</p>
-<p>FURTHER DETAILS</p>
+<h3 style="text-align: center;"><strong>Probabilistic Principal Component <span style="color: #0000ff;">and Covariates</span> Analysis (PPC<span style="color: #0000ff;">C</span>A)</strong></h3>
+<p>PPCCA is an extension of PPCA where subject covariates (e.g. weight, groups, age, etc) are accounted for. These covariates may influence the principal subspace and it is of interest to identify how strong their influence are on the observed data point. This is incorporated in the PPCA model by allowing the multivariate Gaussian distribution to be centered at different position rather than just at the origin. This means that the PC scores are adjusted by the location first before generating the observed data. High amount of adjustment will mean that the covariates are highly influential toward the data. Influential covariates can be examined to provide insight to the type and strength of some covariates may have on the PC scores.</p>
+<p>For more details on PPCA/PPCCA, click <a href="http://hdl.handle.net/10197/2835" target="_blank" rel="noopener">here</a>.</p>
 </div>
 
 </body>

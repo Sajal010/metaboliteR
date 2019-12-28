@@ -3,9 +3,8 @@ library(shiny)
 default_urine_data <- UrineSpectra[[1]]
 default_brain_data <- BrainSpectra[[1]]
 default_dynamic_data <- UrineDynamic
-
+qs_value <- 3
 shinyServer(function(input, output, session) {
-
 
   # HOME --------------------------------------------------------------------
 
@@ -15,7 +14,7 @@ shinyServer(function(input, output, session) {
                  updateNavbarPage(session, "menu_bar",
                                   selected = "PPCA/PPCCA")
                  updateTabsetPanel(session, "PPCA_plot_tabs",
-                                   selected = "PPCA_data")
+                                   selected = "PPCA_steps")
                })
   )
 
@@ -25,7 +24,7 @@ shinyServer(function(input, output, session) {
                  updateNavbarPage(session, "menu_bar",
                                   selected = "MPPCA")
                  updateTabsetPanel(session, "MPPCA_plot_tabs",
-                                   selected = "MPPCA_data")
+                                   selected = "MPPCA_steps")
                })
   )
 
@@ -35,7 +34,7 @@ shinyServer(function(input, output, session) {
                  updateNavbarPage(session, "menu_bar",
                                   selected = "DPPCA")
                  updateTabsetPanel(session, "DPPCA_plot_tabs",
-                                   selected = "DPPCA_data")
+                                   selected = "DPPCA_steps")
                })
   )
 
@@ -45,7 +44,7 @@ shinyServer(function(input, output, session) {
                  updateNavbarPage(session, "menu_bar",
                                   selected = "For PPCA/PPCCA")
                  updateTabsetPanel(session, "sample_size_PPCA_tab",
-                                   selected = "sample_size_PPCA_description")
+                                   selected = "sample_size_PPCA_steps")
                })
   )
 
@@ -54,19 +53,108 @@ shinyServer(function(input, output, session) {
 
   # ppca --------------------------------------------------------------------
 
+  # Dynamically adjust PPCA Main layout width
+  observeEvent(input$PPCA_plot_tabs, {
+    if(input$PPCA_plot_tabs == 'PPCA_steps') {
+      removeClass("PPCA_main_layout", "col-sm-9")
+      addClass("PPCA_main_layout", "col-sm-12")
+    }
+    else {
+      removeClass("PPCA_main_layout", "col-sm-12")
+      addClass("PPCA_main_layout", "col-sm-9")
+    }
+  })
+
+  # PPCA Demo GIF
+  observeEvent(input$PPCA_gif_slider,{
+    if(input$PPCA_gif_slider != 0 ) {shinyjs::show("PPCA_gif_demo")}
+    else if(input$PPCA_gif_slider == 0) {hide("PPCA_gif_demo")}
+    output$PPCA_gif_demo <- renderImage({
+      list(src=paste0("www/PPCA_GIF_comp/PPCA_gif ", input$PPCA_gif_slider, ".png"), height = 400, width = 800)
+    }, deleteFile = FALSE)
+  })
+
+  # PPCA data button from Quick Start
+  observeEvent(input$PPCA_data_QS,
+               isolate({
+                 updateTabsetPanel(session, "PPCA_plot_tabs",
+                                   selected = "PPCA_data")
+               })
+  )
+
+  # PPCA model spec button from Quick Start
+  observeEvent(input$PPCA_model_spec_QS,
+               isolate({
+                 updateTabsetPanel(session, "PPCA_plot_tabs",
+                                   selected = "PPCA_specification")
+               })
+  )
+
+  # Data Selection
+  observeEvent(input$PPCA_data_choice,
+               isolate(
+                 if(input$PPCA_data_choice==FALSE){
+                   updateNavbarPage(session, "menu_bar",
+                                    selected = "PPCA/PPCCA")
+                 })
+  )
+
   ## PPCA Original Data
   original_data <- reactive({
     file1 <- input$PPCA_input_file
-    if(is.null(file1)){return(default_urine_data)}
-    ori_data <- read.table(file=file1$datapath, sep=input$PPCA_sep, header = input$PPCA_header, check.names = F)
-    updateSliderInput(session, "PPCA_cov_slider", max = ceiling(ncol(ori_data)/10))
-    ori_data_rows <- nrow(ori_data)
-    updateSliderInput(session, "PPCA_bootstrap_n_slider", min = ori_data_rows, value = ori_data_rows)
-    ori_data
+    if(input$PPCA_data_choice == FALSE){ #if example data is ticked
+
+      enable("PPCA_submit_para_btn")
+      hide("PPCA_data_check_for_submit")
+
+      return(default_urine_data)
+    }
+    else if(is.null(file1)) { # if file not given
+
+      disable("PPCA_submit_para_btn")
+      shinyjs::show("PPCA_data_check_for_submit")
+
+      return(NULL)
+    }
+    else {
+      ori_data <- read.table(file=file1$datapath, sep=input$PPCA_sep, header = input$PPCA_header, check.names = F)
+      updateSliderInput(session, "PPCA_cov_slider", max = ceiling(ncol(ori_data)/10))
+      ori_data_rows <- nrow(ori_data)
+      updateSliderInput(session, "PPCA_bootstrap_n_slider", min = ori_data_rows, value = ori_data_rows)
+
+      enable("PPCA_submit_para_btn")
+      hide("PPCA_data_check_for_submit")
+
+      ori_data
+    }
+  })
+
+  # This reactive output contains the dataset and display the dataset in table format
+  output$PPCA_original_data_table <- renderDataTable({ # Render Table
+    if(is.null(original_data())){return ()}
+    # head(main_data(), input$lab_slider)
+    original_data()
+  }, options = list(pageLength=10), escape = FALSE)
+
+  output$PPCA_original_data_table_UI <- renderUI({
+    tagList(
+      dataTableOutput("PPCA_original_data_table"),
+      # covariates coloring
+      lapply(input$PPCA_cov_slider[1]:input$PPCA_cov_slider[2], function(i) {
+        tags$style(type="text/css", paste0("#PPCA_original_data_table td:nth-child(", i, ") {background-color:lightblue; color:blue}"))
+      }),
+      # label coloring
+      tags$style(type="text/css", paste0("#PPCA_original_data_table td:nth-child(", input$PPCA_label_slider, ") {background-color:orange}")),
+      # ignore coloring
+      lapply(as.numeric(unlist(strsplit(input$PPCA_ignore_column, ","))), function(i) {
+        tags$style(type="text/css", paste0("#PPCA_original_data_table td:nth-child(", i, ") {background-color:grey}"))
+      })
+    )
   })
 
   ## PPCA Spectral Data
   PPCA_spectral_data <- reactive({ # Read data
+    if(is.null(original_data())) {return(NULL)}
     main_columns <- 1:ncol(original_data())
     main_columns <- as.numeric(na.omit(main_columns[!colnames(original_data()) %in% unlist(strsplit(input$PPCA_ignore_column, ","))])) # remove ignore by colname
     main_columns <- main_columns[!main_columns %in% input$PPCA_cov_slider[1]:input$PPCA_cov_slider[2]] # remove covariates
@@ -83,15 +171,14 @@ shinyServer(function(input, output, session) {
 
   # This reactive output contains the dataset and display the dataset in table format
   output$PPCA_spectral_data_table <- renderDataTable({ # Render Table
-    if(is.null(PPCA_spectral_data())){return ()}
+    if(is.null(PPCA_spectral_data())){return (matrix("Please input data"))}
     # head(main_data(), input$lab_slider)
     PPCA_spectral_data()
   }, options = list(pageLength=10), escape = FALSE)
 
   PPCA_spectral_file_name <- reactive({ # Obtain file name
     inFile <- input$PPCA_input_file
-    if (is.null(inFile))
-      return('Urine Data from Metabol Analyze Package')
+    if (input$PPCA_data_choice == FALSE) {return('Urine Data from Metabol Analyze Package')}
     return (inFile$name)
   })
   output$PPCA_spectral_file_name <- renderText({ PPCA_spectral_file_name() })
@@ -145,44 +232,129 @@ shinyServer(function(input, output, session) {
 
   # mppca -------------------------------------------------------------------
 
+  # Dynamically adjust MPPCA Main layout width
+  observeEvent(input$MPPCA_plot_tabs, {
+    if(input$MPPCA_plot_tabs == 'MPPCA_steps') {
+      removeClass("MPPCA_main_layout", "col-sm-9")
+      addClass("MPPCA_main_layout", "col-sm-12")
+    }
+    else {
+      removeClass("MPPCA_main_layout", "col-sm-12")
+      addClass("MPPCA_main_layout", "col-sm-9")
+    }
+  })
+
+  # MPPCA Demo GIF
+  observeEvent(input$MPPCA_gif_slider,{
+    if(input$MPPCA_gif_slider != 0 ) {shinyjs::show("MPPCA_gif_demo")}
+    else if(input$MPPCA_gif_slider == 0) {hide("MPPCA_gif_demo")}
+    output$MPPCA_gif_demo <- renderImage({
+      list(src=paste0("www/MPPCA_GIF_comp/MPPCA_gif ", input$MPPCA_gif_slider, ".png"), height = 400, width = 800)
+    }, deleteFile = FALSE)
+  })
+
+  # MPPCA data button from Quick Start
+  observeEvent(input$MPPCA_data_QS,
+               isolate({
+                 updateTabsetPanel(session, "MPPCA_plot_tabs",
+                                   selected = "MPPCA_data")
+               })
+  )
+
+  # MPPCA model spec button from Quick Start
+  observeEvent(input$MPPCA_model_spec_QS,
+               isolate({
+                 updateTabsetPanel(session, "MPPCA_plot_tabs",
+                                   selected = "MPPCA_specification")
+               })
+  )
+
+  # MPPCA Data Selection
+  observeEvent(input$MPPCA_data_choice,
+               isolate(
+                 if(input$MPPCA_data_choice==FALSE){
+                   updateNavbarPage(session, "menu_bar",
+                                    selected = "MPPCA")
+                 })
+  )
+
   ## MPPCA Original Data
   MPPCA_original_data <- reactive({
     file2 <- input$MPPCA_input_file
-    if(is.null(file2)){return(default_brain_data)}
-    ori_data2 <- read.table(file=file2$datapath, sep=input$MPPCA_sep, header = input$MPPCA_header, check.names = F)
-    updateSliderInput(session, "PPCA_cov_slider", max = ceiling(ncol(ori_data2)/10))
-    ori_data_rows2 <- nrow(ori_data2)
-    updateSliderInput(session, "PPCA_bootstrap_n_slider", min = ori_data_rows2, value = ori_data_rows2)
-    ori_data2
+    if(input$MPPCA_data_choice == FALSE){ #if example data is ticked
+
+      enable("MPPCA_submit_para_btn")
+      hide("MPPCA_data_check_for_submit")
+
+      return(default_brain_data)
+    }
+    else if(is.null(file2)) { # if file not given
+
+      disable("MPPCA_submit_para_btn")
+      shinyjs::show("MPPCA_data_check_for_submit")
+
+      return(NULL)
+    }
+    else {
+      ori_data2 <- read.table(file=file2$datapath, sep=input$MPPCA_sep, header = input$MPPCA_header, check.names = F)
+      # updateSliderInput(session, "MPPCA_cov_slider", max = ceiling(ncol(ori_data2)/10))
+      ori_data_rows2 <- nrow(ori_data2)
+      updateSliderInput(session, "MPPCA_bootstrap_n_slider", min = ori_data_rows2, value = ori_data_rows2)
+
+      enable("MPPCA_submit_para_btn")
+      hide("MPPCA_data_check_for_submit")
+
+      ori_data2
+    }
+  })
+
+  output$MPPCA_original_data_table <- renderDataTable({ # Render Table
+    if(is.null(MPPCA_original_data())){return ()}
+    # head(main_data(), input$lab_slider)
+    MPPCA_original_data()
+  }, options = list(pageLength=10), escape = FALSE)
+
+  output$MPPCA_original_data_table_UI <- renderUI({
+    tagList(
+      dataTableOutput("MPPCA_original_data_table"),
+      # # covariates coloring
+      # lapply(input$MPPCA_cov_slider[1]:input$MPPCA_cov_slider[2], function(i) {
+      #   tags$style(type="text/css", paste0("#MPPCA_original_data_table td:nth-child(", i, ") {background-color:lightblue; color:blue}"))
+      # }),
+      # label coloring
+      tags$style(type="text/css", paste0("#MPPCA_original_data_table td:nth-child(", input$MPPCA_label_slider, ") {background-color:orange}")),
+      # ignore coloring
+      lapply(as.numeric(unlist(strsplit(input$MPPCA_ignore_column, ","))), function(i) {
+        tags$style(type="text/css", paste0("#MPPCA_original_data_table td:nth-child(", i, ") {background-color:grey}"))
+      })
+    )
   })
 
   ## MPPCA Spectral Data
   MPPCA_spectral_data <- reactive({ # Read data
+    if(is.null(MPPCA_original_data())) {return(NULL)}
     main_columns2 <- 1:ncol(MPPCA_original_data())
     main_columns2 <- as.numeric(na.omit(main_columns2[!colnames(MPPCA_original_data()) %in% unlist(strsplit(input$MPPCA_ignore_column, ","))])) # remove ignore by colname
-    main_columns2 <- main_columns2[!main_columns2 %in% input$MPPCA_cov_slider[1]:input$MPPCA_cov_slider[2]] # remove covariates
+    # main_columns2 <- main_columns2[!main_columns2 %in% input$MPPCA_cov_slider[1]:input$MPPCA_cov_slider[2]] # remove covariates
     main_columns2 <- main_columns2[main_columns2!=input$MPPCA_label_slider] # remove label
     main_columns2 <- main_columns2[!main_columns2 %in% as.numeric(unlist(strsplit(input$MPPCA_ignore_column, ",")))] # remove ignore by col number
     if(input$MPPCA_scale=='PQN'){
-      a2<-scale_data(MPPCA_original_data()[, main_columns2],"PQN")
-      b2<-as.data.frame(a$newXtrain)
+      return(norm(MPPCA_original_data()[, main_columns2]))
     }
     else
       apply(MPPCA_original_data()[, main_columns2], 2,function (y) scale_data(y,input$MPPCA_scale))
     #MPPCA_original_data()[, main_columns2]
   })
 
-  # This reactive output contains the dataset and display the dataset in table format
   output$MPPCA_spectral_data_table <- renderDataTable({ # Render Table
-    if(is.null(MPPCA_spectral_data())){return ()}
+    if(is.null(MPPCA_spectral_data())){return (matrix("Please input data"))}
     # head(main_data(), input$lab_slider)
     MPPCA_spectral_data()
   }, options = list(pageLength=10), escape = FALSE)
 
   MPPCA_spectral_file_name <- reactive({ # Obtain file name
     inFile2 <- input$MPPCA_input_file
-    if (is.null(inFile2))
-      return('Brain Data from Metabol Analyze Package')
+    if (input$MPPCA_data_choice == FALSE) {return('Brain Data from Metabol Analyze Package')}
     return (inFile2$name)
   })
   output$MPPCA_spectral_file_name <- renderText({ MPPCA_spectral_file_name() })
@@ -240,21 +412,85 @@ shinyServer(function(input, output, session) {
 
   # dppca --------------------------------------------------------------------
 
-  ## PPCA Original Data
+  # Dynamically adjust DPPCA Main layout width
+  observeEvent(input$DPPCA_plot_tabs, {
+    if(input$DPPCA_plot_tabs == 'DPPCA_steps') {
+      removeClass("DPPCA_main_layout", "col-sm-9")
+      addClass("DPPCA_main_layout", "col-sm-12")
+    }
+    else {
+      removeClass("DPPCA_main_layout", "col-sm-12")
+      addClass("DPPCA_main_layout", "col-sm-9")
+    }
+  })
+
+  # DPPCA Demo GIF
+  observeEvent(input$DPPCA_gif_slider,{
+    if(input$DPPCA_gif_slider != 0 ) {shinyjs::show("DPPCA_gif_demo")}
+    else if(input$DPPCA_gif_slider == 0) {hide("DPPCA_gif_demo")}
+    output$DPPCA_gif_demo <- renderImage({
+      list(src=paste0("www/DPPCA_GIF_comp/DPPCA_gif ", input$DPPCA_gif_slider, ".png"), height = 400, width = 800)
+    }, deleteFile = FALSE)
+  })
+
+  # DPPCA data button from Quick Start
+  observeEvent(input$DPPCA_data_QS,
+               isolate({
+                 updateTabsetPanel(session, "DPPCA_plot_tabs",
+                                   selected = "DPPCA_data")
+               })
+  )
+
+  # DPPCA model spec button from Quick Start
+  observeEvent(input$DPPCA_model_spec_QS,
+               isolate({
+                 updateTabsetPanel(session, "DPPCA_plot_tabs",
+                                   selected = "DPPCA_specification")
+               })
+  )
+
+  # DPPCA Data Selection
+  observeEvent(input$DPPCA_data_choice,
+               isolate(
+                 if(input$DPPCA_data_choice==FALSE){
+                   updateNavbarPage(session, "menu_bar",
+                                    selected = "DPPCA")
+                 })
+  )
+
+  ## DPPCA Original Data
   DPPCA_original_data <- reactive({
     file3 <- input$DPPCA_input_file
-    if(is.null(file3)){return(default_dynamic_data)}
+    if(input$DPPCA_data_choice == FALSE){ #if example data is ticked
 
-    # Reset controls
-    updateSliderInput(session, "DPPCA_time_slider", value = 0)
-    updateSliderInput(session, "DPPCA_label_slider", value = 0)
-    updateTextInput(session, "DPPCA_ignore_column", value = "")
+      enable("DPPCA_submit_para_btn")
+      hide("DPPCA_data_check_for_submit")
 
-    # Read input files
-    ori_data <- read.table(file=file3$datapath, sep=input$DPPCA_sep, header = input$DPPCA_header, check.names = F)
-    ori_data_rows <- nrow(ori_data)
-    updateSliderInput(session, "DPPCA_bootstrap_n_slider", min = ori_data_rows, value = ori_data_rows)
-    ori_data
+      return(default_dynamic_data)
+    }
+    else if(is.null(file3)) { # if file not given
+
+      disable("DPPCA_submit_para_btn")
+      shinyjs::show("DPPCA_data_check_for_submit")
+
+      return(NULL)
+    }
+    else {
+      # Reset controls
+      updateSliderInput(session, "DPPCA_time_slider", value = 0)
+      updateSliderInput(session, "DPPCA_label_slider", value = 0)
+      updateTextInput(session, "DPPCA_ignore_column", value = "")
+
+      # Read input files
+      ori_data <- read.table(file=file3$datapath, sep=input$DPPCA_sep, header = input$DPPCA_header, check.names = F)
+      ori_data_rows <- nrow(ori_data)
+      updateSliderInput(session, "DPPCA_bootstrap_n_slider", min = ori_data_rows, value = ori_data_rows)
+
+      enable("DPPCA_submit_para_btn")
+      hide("DPPCA_data_check_for_submit")
+
+      ori_data
+    }
   })
 
   # This reactive output contains the dataset and display the dataset in table format
@@ -267,17 +503,14 @@ shinyServer(function(input, output, session) {
   output$DPPCA_original_data_table_UI <- renderUI({
     tagList(
       dataTableOutput("DPPCA_original_data_table"),
-      tags$style(type="text/css", paste0("#DPPCA_original_data_table td:nth-child(", input$DPPCA_time_slider, ") {background-color:cyan}")),
-      tags$style(type="text/css", paste0("#DPPCA_original_data_table td:nth-child(", input$DPPCA_label_slider, ") {background-color:lightgreen}")),
-
+      tags$style(type="text/css", paste0("#DPPCA_original_data_table td:nth-child(", input$DPPCA_time_slider, ") {background-color:lightgreen}")),
+      tags$style(type="text/css", paste0("#DPPCA_original_data_table td:nth-child(", input$DPPCA_label_slider, ") {background-color:orange}")),
+      lapply(as.numeric(unlist(strsplit(input$DPPCA_ignore_column, ","))), function(i) {
+        tags$style(type="text/css", paste0("#DPPCA_original_data_table td:nth-child(", i, ") {background-color:grey}"))
+      })
     )
   })
 
-  output$DPPCA_original_data_table_UI_color <- renderUI({
-    lapply(as.numeric(unlist(strsplit(input$DPPCA_ignore_column, ","))), function(i) {
-      tags$style(type="text/css", paste0("#DPPCA_original_data_table td:nth-child(", i, ") {background-color:grey}"))
-    })
-  })
 
   ## DPPCA Data list by Time
   DPPCA_time_data_list <- reactive({ # Read data
@@ -288,9 +521,9 @@ shinyServer(function(input, output, session) {
     time_list
   })
 
-
   ## DPPCA Spectral Data
   DPPCA_spectral_data_list <- reactive({ # Read data
+    if(is.null(DPPCA_original_data())) {return(NULL)}
     if(input$DPPCA_time_slider == 0) {return(DPPCA_original_data())}
     main_columns <- 1:ncol(DPPCA_original_data())
     main_columns <- as.numeric(na.omit(main_columns[!colnames(DPPCA_original_data()) %in% unlist(strsplit(input$DPPCA_ignore_column, ","))])) # remove ignore by colname
@@ -308,6 +541,7 @@ shinyServer(function(input, output, session) {
 
   # This reactive output contains the dataset and display the dataset in table format
   output$DPPCA_spectral_data_table <- renderDataTable({ # Render Table
+    if(is.null(DPPCA_spectral_data_list())){return (matrix("Please input data"))}
     if(input$DPPCA_time_slider == 0) {return(DPPCA_original_data())}
     DPPCA_spectral_data_list()[[input$DPPCA_time_selected]]
   }, options = list(pageLength=10), escape = FALSE)
@@ -356,12 +590,11 @@ shinyServer(function(input, output, session) {
   # Write file name on screen
   DPPCA_spectral_file_name <- reactive({ # Obtain file name
     inFile3 <- input$DPPCA_input_file
-    if (is.null(inFile3))
-      return('Dynamic Urine Data from UCD')
+
+    if (input$PPCA_data_choice == FALSE) {return('Dynamic Urine Data from UCD')}
     return (inFile3$name)
   })
   output$DPPCA_spectral_file_name <- renderText({ DPPCA_spectral_file_name() })
-
 
 
 
@@ -374,7 +607,7 @@ shinyServer(function(input, output, session) {
   observeEvent(input$PPCA_parameter_button,
                isolate({
                  updateTabsetPanel(session, "PPCA_plot_tabs",
-                                   selected = "PPCA_description")
+                                   selected = "PPCA_specification")
                })
   )
 
@@ -390,7 +623,7 @@ shinyServer(function(input, output, session) {
   observeEvent(input$PPCA_return_param,
                isolate({
                  updateTabsetPanel(session, "PPCA_plot_tabs",
-                                   selected = "PPCA_description")
+                                   selected = "PPCA_specification")
                })
   )
 
@@ -415,7 +648,7 @@ shinyServer(function(input, output, session) {
   observeEvent(input$PPCA_submit_para_btn,
                isolate({
 
-                 showNotification("Running PPCA...", duration = NULL, id = "ppca_progress",
+                 showNotification("Running PPCA/PPCCA...", duration = NULL, id = "ppca_progress",
                                   closeButton = FALSE, type = "message")
 
                  # Run PPCA model
@@ -540,7 +773,7 @@ shinyServer(function(input, output, session) {
 
 
                  # Switches to Score plot if User is in Description when model has finished running.
-                 if(input$PPCA_plot_tabs == 'PPCA_description') {
+                 if(input$PPCA_plot_tabs == 'PPCA_specification') {
                    updateTabsetPanel(session, "PPCA_plot_tabs",
                                      selected = "PPCA_score_plot"
                    )
@@ -557,7 +790,7 @@ shinyServer(function(input, output, session) {
   observeEvent(input$MPPCA_parameter_button,
                isolate({
                  updateTabsetPanel(session, "MPPCA_plot_tabs",
-                                   selected = "MPPCA_description")
+                                   selected = "MPPCA_specification")
                })
   )
 
@@ -573,7 +806,7 @@ shinyServer(function(input, output, session) {
   observeEvent(input$MPPCA_return_param,
                isolate({
                  updateTabsetPanel(session, "MPPCA_plot_tabs",
-                                   selected = "MPPCA_description")
+                                   selected = "MPPCA_specification")
                })
   )
 
@@ -699,7 +932,7 @@ shinyServer(function(input, output, session) {
                                    min = group_mix_val[1], max = group_mix_max_slider)
 
                  # Switches to Score plot if User is in Description when model has finished running.
-                 if(input$MPPCA_plot_tabs == 'MPPCA_description') {
+                 if(input$MPPCA_plot_tabs == 'MPPCA_specification') {
                    updateTabsetPanel(session, "MPPCA_plot_tabs",
                                      selected = "MPPCA_score_plot"
                    )
@@ -716,7 +949,7 @@ shinyServer(function(input, output, session) {
   observeEvent(input$DPPCA_parameter_button,
                isolate({
                  updateTabsetPanel(session, "DPPCA_plot_tabs",
-                                   selected = "DPPCA_description")
+                                   selected = "DPPCA_specification")
                })
   )
 
@@ -732,7 +965,7 @@ shinyServer(function(input, output, session) {
   observeEvent(input$DPPCA_return_param,
                isolate({
                  updateTabsetPanel(session, "DPPCA_plot_tabs",
-                                   selected = "DPPCA_description")
+                                   selected = "DPPCA_specification")
                })
   )
 
@@ -762,7 +995,26 @@ shinyServer(function(input, output, session) {
 
   ### Put pre-run values into dppca_output
   dppca_output <- reactiveValues(
-    result=dppca_results, lmm = lmm_fit)
+    result = NULL, lmm = NULL)
+
+  ### Temporary example result
+  observeEvent(input$DPPCA_result_choice,
+               isolate({
+                 if(input$DPPCA_result_choice) {
+                   dppca_output$result <- NULL
+                   dppca_output$lmm <- NULL
+                   hide(id = "Pre-run_results_warning")
+                   hide(id = "Pre-run_results_warning2")
+                 }
+                 else if(input$DPPCA_result_choice == FALSE) {
+                   dppca_output$result <- dppca_results
+                   dppca_output$lmm <- lmm_fit
+                   shinyjs::show(id = "Pre-run_results_warning")
+                   shinyjs::show(id = "Pre-run_results_warning2")
+                 }
+               })
+  )
+
 
   # Submit DPPCA Parameter Button
   observeEvent(input$DPPCA_submit_para_btn,
@@ -799,7 +1051,7 @@ shinyServer(function(input, output, session) {
 
 
                  # Switches to Score plot if User is in Description when model has finished running.
-                 if(input$DPPCA_plot_tabs == 'DPPCA_description') {
+                 if(input$DPPCA_plot_tabs == 'DPPCA_specification') {
                    updateTabsetPanel(session, "DPPCA_plot_tabs",
                                      selected = "DPPCA_chain_conver"
                    )
@@ -815,6 +1067,7 @@ shinyServer(function(input, output, session) {
 
   # Chain Convergence Tab plot
   output$DPPCA_plot_load_score_chain <- renderPlot({
+    if(is.null(dppca_output$result)){return()}
     par(mfrow=c(1,2))
     plot(dppca_output$result$U_chain)
     plot(dppca_output$result$W_chain)
@@ -831,13 +1084,16 @@ shinyServer(function(input, output, session) {
                })
   )
   output$DPPCA_plot_persistence_chain <- renderPlot({
+    if(is.null(dppca_output$result)){return()}
     plot(dppca_output$result$persistance, type = "chain")
   })
   # Time Influence Tab plots
   output$DPPCA_plot_persistence_histogram <- renderPlot({
+    if(is.null(dppca_output$result)){return()}
     plot(dppca_output$result$persistance)
   })
   output$DPPCA_plot_persistence_summary <- renderPrint({
+    if(is.null(dppca_output$result)){return()}
     summary(dppca_output$result$persistance)
   })
   # Loading Analysis Tab plots
@@ -848,6 +1104,7 @@ shinyServer(function(input, output, session) {
                        cred_level = input$DPPCA_cred_int)
   })
   output$DPPCA_plot_top_loadings <- renderPlot({
+    if(is.null(dppca_output$result)){return()}
     plot.top_loadings(DPPCA_top(), M=input$DPPCA_load_analysis_time)
   })
   # LMM Results Tab plots
@@ -884,28 +1141,101 @@ shinyServer(function(input, output, session) {
                })
   )
   output$DPPCA_LMM_summary <- renderPrint({
+    if(is.null(dppca_output$lmm)){return()}
     summary(dppca_output$lmm)
   })
   output$DPPCA_plot_LMM_fit <- renderPlot({
+    if(is.null(dppca_output$lmm)){return()}
     plot(dppca_output$lmm)
   })
 
   # Sample Size Estimation---------------------------------------------------
 
-# for ppca ----------------------------------------------------------------
+  # for ppca ----------------------------------------------------------------
+
+  # Dynamically adjust Sample Size PPCA Main layout width
+  observeEvent(input$sample_size_PPCA_tab, {
+    if(input$sample_size_PPCA_tab == 'sample_size_PPCA_steps') {
+      removeClass("sample_size_PPCA_main_layout", "col-sm-9")
+      addClass("sample_size_PPCA_main_layout", "col-sm-12")
+    }
+    else {
+      removeClass("sample_size_PPCA_main_layout", "col-sm-12")
+      addClass("sample_size_PPCA_main_layout", "col-sm-9")
+    }
+  })
+
+  # Sample Size PPCA Demo GIF
+  observeEvent(input$sample_size_PPCA_gif_slider,{
+    if(input$sample_size_PPCA_gif_slider != 0 ) {shinyjs::show("sample_size_PPCA_gif_demo")}
+    else if(input$sample_size_PPCA_gif_slider == 0) {hide("sample_size_PPCA_gif_demo")}
+    output$sample_size_PPCA_gif_demo <- renderImage({
+      list(src=paste0("www/sample_size_PPCA_GIF_comp/sample_size_PPCA_gif ", input$sample_size_PPCA_gif_slider, ".png"), height = 400, width = 800)
+    }, deleteFile = FALSE)
+  })
+
+  # Sample Size PPCA data button from Quick Start
+  observeEvent(input$sample_size_PPCA_data_QS,
+               isolate({
+                 updateTabsetPanel(session, "sample_size_PPCA_tab",
+                                   selected = "sample_size_PPCA_pilot_data")
+               })
+  )
+
+  # Sample Size PPCA model spec button from Quick Start
+  observeEvent(input$sample_size_PPCA_model_spec_QS,
+               isolate({
+                 updateTabsetPanel(session, "sample_size_PPCA_tab",
+                                   selected = "sample_size_PPCA_specification")
+               })
+  )
+
+  # Sample Size PPCA Data Selection
+  observeEvent(input$sample_size_PPCA_data_choice,
+               isolate(
+                 if(input$sample_size_PPCA_data_choice==FALSE){
+                   updateNavbarPage(session, "menu_bar",
+                                    selected = "For PPCA/PPCCA")
+                 })
+  )
+
+  # Enable Calculate Sample Size When Pilot Data Not Included
+  observeEvent(input$sample_size_PPCA_pilot_check,
+               isolate(
+                 if(input$sample_size_PPCA_pilot_check==FALSE){
+                   enable("sample_size_PPCA_submit_button")
+                   hide("sample_size_PPCA_data_check_for_submit")
+                 })
+  )
 
   ## Pilot PPCA Input Data
   sample_size_PPCA_data <- reactive({
     file4 <- input$sample_size_PPCA_pilot_data
-    if(is.null(file4)){return(default_urine_data)}
-    sample_size_PPCA_ori_data <- read.table(file=file4$datapath, sep=input$sample_size_PPCA_sep,
-                                            header = input$sample_size_PPCA_header, check.names = F)
-    updateSliderInput(session, "sample_size_PPCA_cov_slider", max = ceiling(ncol(sample_size_PPCA_ori_data)/10))
-    apply(ori_data,2,function (y) scale_data(y,input$sample_size_PPCA_scale))
+    if(input$sample_size_PPCA_data_choice == FALSE){ #if example data is ticked
+      enable("sample_size_PPCA_submit_button")
+      hide("sample_size_PPCA_data_check_for_submit")
+      return(default_urine_data)
+    }
+    else if(is.null(file4)) { # if file not given
+      if(input$sample_size_PPCA_pilot_check == TRUE) { # only disable when pilot data is ticked
+        disable("sample_size_PPCA_submit_button")
+        shinyjs::show("sample_size_PPCA_data_check_for_submit")
+      }
+      return(NULL)
+    }
+    else {
+      enable("sample_size_PPCA_submit_button")
+      hide("sample_size_PPCA_data_check_for_submit")
+      sample_size_PPCA_ori_data <- read.table(file=file4$datapath, sep=input$sample_size_PPCA_sep,
+                                              header = input$sample_size_PPCA_header, check.names = F)
+      updateSliderInput(session, "sample_size_PPCA_cov_slider", max = ceiling(ncol(sample_size_PPCA_ori_data)/10))
+      apply(ori_data,2,function (y) scale_data(y,input$sample_size_PPCA_scale))
+    }
   })
 
   ## Pilot PPCA Spectral Data
   sample_size_PPCA_spectral_data <- reactive({ # Read data
+    if(is.null(sample_size_PPCA_data())) {return(NULL)}
     main_columns <- 1:ncol(sample_size_PPCA_data())
     main_columns <- as.numeric(na.omit(main_columns[!colnames(sample_size_PPCA_data()) %in% unlist(strsplit(input$sample_size_PPCA_ignore_column, ","))])) # remove ignore by colname
     main_columns <- main_columns[!main_columns %in% input$sample_size_PPCA_cov_slider[1]:input$sample_size_PPCA_cov_slider[2]] # remove covariates
@@ -913,7 +1243,6 @@ shinyServer(function(input, output, session) {
     main_columns <- main_columns[!main_columns %in% as.numeric(unlist(strsplit(input$sample_size_PPCA_ignore_column, ",")))] # remove ignore by col number
     if(input$sample_size_PPCA_scale=='PQN'){
       return(norm(sample_size_PPCA_data()[, main_columns]))
-
     }
     else
       apply(sample_size_PPCA_data()[, main_columns], 2,function (y) scale_data(y,input$sample_size_PPCA_scale))
@@ -929,8 +1258,7 @@ shinyServer(function(input, output, session) {
 
   sample_size_PPCA_spectral_file_name <- reactive({ # Obtain file name
     inFile <- input$sample_size_PPCA_pilot_data
-    if (is.null(inFile))
-      return('Urine Data from Metabol Analyze Package')
+    if (input$sample_size_PPCA_data_choice == FALSE) {return('Urine Data from Metabol Analyze Package')}
     return (inFile$name)
   })
   output$sample_size_PPCA_spectral_file_name <- renderText({ sample_size_PPCA_spectral_file_name() })
@@ -962,7 +1290,7 @@ shinyServer(function(input, output, session) {
   observeEvent(input$sample_size_PPCA_parameter_button,
                isolate({
                  updateTabsetPanel(session, "sample_size_PPCA_tab",
-                                   selected = "sample_size_PPCA_description")
+                                   selected = "sample_size_PPCA_specification")
                })
   )
 
@@ -978,7 +1306,7 @@ shinyServer(function(input, output, session) {
   observeEvent(input$sample_size_PPCA_return_param_button,
                isolate({
                  updateTabsetPanel(session, "sample_size_PPCA_tab",
-                                   selected = "sample_size_PPCA_description")
+                                   selected = "sample_size_PPCA_specification")
                })
   )
 
@@ -1048,18 +1376,18 @@ shinyServer(function(input, output, session) {
                                                plot.prop = TRUE)},
                                       value = 0.8, message = "Calculating Sample Size..."
                          )
-                     }
-                     else {
-                       withProgress({metsize(pilot=NULL,
-                                             p = input$sample_size_PPCA_n2,
-                                             prop = input$sample_size_PPCA_prop_sig_bins,
-                                             target.fdr = input$sample_size_PPCA_target_fdr,
-                                             n1 = input$sample_size_PPCA_n1,
-                                             n2 = input$sample_size_PPCA_n2,
-                                             plot.prop = TRUE)},
-                                    value = 0.8, message = "Calculating Sample Size..."
-                       )
-                     })
+                       }
+                       else {
+                         withProgress({metsize(pilot=NULL,
+                                               p = input$sample_size_PPCA_n2,
+                                               prop = input$sample_size_PPCA_prop_sig_bins,
+                                               target.fdr = input$sample_size_PPCA_target_fdr,
+                                               n1 = input$sample_size_PPCA_n1,
+                                               n2 = input$sample_size_PPCA_n2,
+                                               plot.prop = TRUE)},
+                                      value = 0.8, message = "Calculating Sample Size..."
+                         )
+                       })
                    })
 
                    output$sample_size_PPCA_significant_bins <- renderPlot({
@@ -1073,7 +1401,7 @@ shinyServer(function(input, output, session) {
                                                n2 = input$sample_size_PPCA_n2,
                                                plot.prop = TRUE)},
                                       value = 0.8, message = "Producing plot..."
-                                      )
+                         )
                        }
                        else {
                          withProgress({metsize(pilot=NULL,
@@ -1092,7 +1420,7 @@ shinyServer(function(input, output, session) {
 
 
                  # Switches to Score plot if User is in Description when model has finished running.
-                 if(input$sample_size_PPCA_tab == 'sample_size_PPCA_description') {
+                 if(input$sample_size_PPCA_tab == 'sample_size_PPCA_specification') {
                    updateTabsetPanel(session, "sample_size_PPCA_tab",
                                      selected = "sample_size_PPCA_estimation"
                    )

@@ -10,10 +10,10 @@ PPCA_one_q <- function(data, covariates_data, q, eps = 0.01, max_it = 1000, init
   # Initialise variables
   n <- nrow(data) # total number of spectral profiles
 
-  # # for some reason, n will not converge if n <= 2
-  # if(n <= 2) {
-  #   return(print("Data has too little observation"))
-  # }
+  # for some reason, n will not converge if n <= 2
+  if(n <= 2) {
+    return(print("Data has too little observation"))
+  }
 
   p <- ncol(data) # total number of spectral bins
 

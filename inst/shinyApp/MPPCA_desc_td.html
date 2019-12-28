@@ -11,7 +11,6 @@
 </head>
 
 <body>
-
 <h3 style="text-align: center;"><strong>Mixtures of&nbsp;Probabilistic Principal Component Analysis (MPPCA)</strong></h3>
 <div>
 <p>The model can be formulate as follow:</p>
@@ -25,19 +24,28 @@
 <li>\(\underline{\mu_g}\) is the mean vector of subject i <span style="color: #993366;">within group g</span></li>
 <li>\(\underline{\epsilon_{ig}}\) is the multivariate Gaussian noise for observation i <span style="color: #993366;">within group g</span></li>
 </ul>
-<p>The model has a few assumptions in order to obtain the parameter estimates:</p>
+<p><span style="text-decoration: underline;">The model has a few assumptions in order to obtain the parameter estimates:</span></p>
 <ol>
-<li>\(\underline{\epsilon_{ig}} \sim MVN(\underline{0}, \sigma^2 \mathbf{I})\)</li>
+<li>\(\underline{\epsilon_{ig}} \sim MVN(\underline{0}, \sigma^2 \mathbf{I})\),&nbsp; &nbsp; &nbsp;<span style="color: #808080;">note:&nbsp;\(\sigma_g = \sigma\) (i.e. equal error variance across all groups)</span></li>
 <li>\(\underline{u_{ig}} \sim MVN(\underline{0}, \mathbf{I})\)&nbsp;</li>
+<li>\(p(\underline{x_i}) = \sum_{g=1}^{G}&nbsp;\pi_g p(\underline{x_i}|\underline{\mu_g},\Sigma_g)\) (i.e. observation is drawn from finite mixture distribution with G components)</li>
 </ol>
-<p>where \(\mathbf{I}\) is the Identity matrix</p>
+<p>where,</p>
+<ul>
+<li>\(\mathbf{I}\) is the Identity matrix</li>
+<li>\(\pi_g\) is the mixing proportion which denotes the probability of an observation belonging to group g. \(( 0 \leq \pi_g \leq 1 , \quad \sum_{g=1}^{G} \pi_g = 1 )\)</li>
+</ul>
 <p><span style="text-decoration: underline;"><strong>Model Algorithm:</strong></span></p>
 <ol>
-<li>Initialise loadings matrix,&nbsp;\(\mathbf{W}\), and sigma parameter,&nbsp;\(\sigma\)&nbsp;</li>
-<li>Calculate the conditional expectation of the score,&nbsp;\(\mathbb{E}(\underline{u_i}|...)\) (E step)&nbsp;</li>
-<li>Calculate the maximum likelihood function with respect to the parameters and re-initialize them (M step)</li>
-<li>Repeat step 2 and 3 until convergence criterion is achieved or until maximum iteration is arrived.</li>
+<li>Initialise cluster groups \(\pi_g\) on the observed data.</li>
+<li>Initialise loadings matrix,&nbsp;\(\mathbf{W_g}\), and sigma parameter,&nbsp;\(\sigma\) within respective groups.&nbsp;</li>
+<li>Calculate the expected group membership,&nbsp;\(\tau_{ig}\), of each observation. (E step 1st cycle)</li>
+<li>Calculate the maximum likelihood function with respect to&nbsp;\(\underline{\mu_g}\) and \(\pi_g\). (M step 1st cycle)</li>
+<li>Calculate the conditional expectation of the score,&nbsp;\(\mathbb{E}(\underline{u_{ig}}|...)\) and recalculate \(\tau_{ig}\). (E step 2nd cycle)&nbsp;</li>
+<li>Calculate the maximum likelihood function with respect to&nbsp;\(\mathbf{W_g}\) and \(\sigma\). (M step 2nd cycle)</li>
+<li>Then, re-initialize these parameters and repeat step 3 to 6 until convergence criterion is achieved.</li>
 </ol>
+<p>For more details on MPPCA, click <a href="http://hdl.handle.net/10197/2835" target="_blank" rel="noopener">here</a>.</p>
 
 </body>
 </html>

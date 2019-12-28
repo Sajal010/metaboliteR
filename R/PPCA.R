@@ -106,7 +106,7 @@ PPCA <- function(data, covariates_data, q_min = 1, q_max = 10, B = 5, eps = 0.01
       return(result)
     }
 
-    all = sapply(X = seq(1,q,1), FUN = get_table, data = data, est = output$loadings, lower = lower_CI, upper = upper_CI)
+    all = lapply(X = seq(1,q,1), FUN = get_table, data = data, est = output$loadings, lower = lower_CI, upper = upper_CI)
 
     significant_x = lapply(all, "[", i =, j = 1)
     significant_x = lapply(significant_x, as.vector)
