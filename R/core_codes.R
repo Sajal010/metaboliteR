@@ -181,7 +181,7 @@ PPCA_one_q <- function(data, covariates_data, q, eps = 0.01, max_it = 1000, init
 
 PPCA_multi_q = function(data, covariates_data, q_min, q_max, eps = 0.01, max_it = 1000){
   ori_plan <- plan()
-  plan(multisession)
+  #plan(multisession)
 
   X <- q_min:q_max
 
@@ -254,7 +254,7 @@ loadings_std = function(data, q, B, initial_guesses){
   }
 
   ori_plan <- plan()
-  plan(multisession)
+  #plan(multisession)
 
   list_loadings = 1:B %>%
     future_map(~ one_replica(data, q))
@@ -280,7 +280,7 @@ loadings_alpha_std = function(data,covariates_data, q, B, initial_guesses){
     return(out)
   }
   ori_plan <- plan()
-  plan(multisession)
+  #plan(multisession)
 
   list_boot = 1:B %>%
     future_map(~ one_replica(data,covariates_data, q))
