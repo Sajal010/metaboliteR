@@ -64,7 +64,7 @@ MPPCA_one_q_one_g <- function(data, q, g, max_it = 1000,eps = 0.1, initial.guess
       } else if (g > 1){
 
         ori_plan <- plan()
-        plan(multisession)
+        #plan(multisession)
 
         x= seq(1,g,1)
         w_g <- try(future_lapply(x, function(x) {
@@ -415,7 +415,7 @@ loadings_std_mppca = function(data, q, g, initial.guesses, B){
   }
 
   ori_plan <- plan()
-  plan(multisession)
+  #plan(multisession)
 
   list_loadings = 1:B %>%
     future_map(~ one_replica(data, q, g, initial.guesses))
