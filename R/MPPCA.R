@@ -34,7 +34,7 @@ MPPCA = function(data, q_min=1, q_max=2, g_min=1, g_max=2, eps = 0.1, B=5){
 
   multiple = list(q = comb$q, g = comb$g)
   ori_plan <- plan()
-  plan(multisession)
+  #plan(multisession)
   out = furrr::future_pmap(multiple, MPPCA_one_q_one_g, data = data, eps = 0.1, .progress = TRUE)
 
   ######### Selecting optimal model #########
